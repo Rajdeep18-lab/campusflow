@@ -19,24 +19,6 @@ const CATEGORY_COLORS = {
   Recharge: '#14b8a6', Entertainment: '#6366f1', Others: '#64748b',
 };
 
-/* ─── Reusable Stat Card ─── */
-const StatCard = ({ label, value, sub, icon: Icon, iconBg, iconColor, onClick }) => (
-  <div
-    className="stat-card"
-    onClick={onClick}
-    style={onClick ? { cursor: 'pointer' } : undefined}
-  >
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-      <span className="stat-label">{label}</span>
-      <div className="stat-icon-box" style={{ background: iconBg }}>
-        <Icon size={16} color={iconColor} strokeWidth={2} />
-      </div>
-    </div>
-    <div className="stat-value">{value}</div>
-    {sub && <div className="stat-sub">{sub}</div>}
-  </div>
-);
-
 /* ─── Priority Badge ─── */
 const PriorityBadge = ({ priority }) => {
   const map = {

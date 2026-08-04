@@ -71,35 +71,6 @@ const DonutChart = ({ segments, size = 180, thickness = 28 }) => {
   );
 };
 
-/* ── Weekly Bar Chart ── */
-const WeeklyChart = ({ data, maxVal }) => (
-  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 80 }}>
-    {data.map(({ label, amount, isToday }, i) => {
-      const pct = maxVal > 0 ? (amount / maxVal) * 100 : 0;
-      return (
-        <div key={label} className="week-bar" style={{ alignItems: 'center' }}>
-          <div
-            className="week-bar-fill"
-            style={{
-              height: `${Math.max(pct, 4)}%`,
-              background: isToday
-                ? 'linear-gradient(180deg, #10b981, #059669)'
-                : 'rgba(16,185,129,0.25)',
-              width: '100%',
-              borderRadius: '3px 3px 0 0',
-              position: 'relative',
-              transition: `height 0.7s cubic-bezier(0.16,1,0.3,1) ${i * 0.05}s`,
-            }}
-          />
-          <div style={{ fontSize: '0.5625rem', fontWeight: isToday ? 700 : 500, color: isToday ? 'var(--accent)' : 'var(--text-muted)', marginTop: 4 }}>
-            {label}
-          </div>
-        </div>
-      );
-    })}
-  </div>
-);
-
 /* ── Insight Card ── */
 const InsightCard = ({ emoji, text, subtext, delay = 0 }) => (
   <div className="insight-card" style={{ animationDelay: `${delay}s` }}>
