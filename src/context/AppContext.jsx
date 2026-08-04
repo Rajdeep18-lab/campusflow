@@ -37,7 +37,7 @@ export const AppProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('campusflow_budget_v2');
       return saved ? JSON.parse(saved) : 0;
-    } catch (e) {
+    } catch {
       return 0;
     }
   });
@@ -46,7 +46,7 @@ export const AppProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('campusflow_todos_v2');
       return saved ? JSON.parse(saved) : [];
-    } catch (e) {
+    } catch {
       return [];
     }
   });
@@ -286,7 +286,7 @@ export const AppProvider = ({ children }) => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       showToast('Backup JSON file downloaded!');
-    } catch (err) {
+    } catch {
       showToast('Failed to export backup JSON', 'danger');
     }
   };
@@ -303,7 +303,7 @@ export const AppProvider = ({ children }) => {
       if (Array.isArray(parsed.todos)) setTodos(parsed.todos);
       showToast('Data imported successfully!', 'success');
       return true;
-    } catch (err) {
+    } catch {
       showToast('Failed to import JSON file. Please check file format.', 'danger');
       return false;
     }

@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {
   BarChart3,
   TrendingUp,
-  TrendingDown,
   Wallet,
   CheckSquare,
   Lightbulb,
@@ -328,7 +327,7 @@ export const AnalyticsView = () => {
     return list.slice(0, 5);
   }, [sortedCats, totalSum, monthlyBudget, isOverBudget, remainingBudget, budgetUsagePercent,
       avgDaily, dayOfMonth, todaySpend, taskCompletionPercent, totalTasksCount,
-      completedTasksCount, pendingTasksCount, savings, expenses, todayStr, monthlyExpensesTotal]);
+      completedTasksCount, pendingTasksCount, savings, monthlyExpensesTotal]);
 
   const highTasks   = todos.filter(t => t.priority === 'High').length;
   const mediumTasks = todos.filter(t => t.priority === 'Medium').length;

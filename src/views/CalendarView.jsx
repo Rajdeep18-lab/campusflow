@@ -6,7 +6,6 @@ import {
   Receipt,
   CheckSquare,
   Plus,
-  AlertTriangle,
   CheckCircle2,
   Clock,
 } from 'lucide-react';

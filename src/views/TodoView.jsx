@@ -10,7 +10,6 @@ import {
   Clock,
   ClipboardList,
   AlertTriangle,
-  Circle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { EmptyState } from '../components/EmptyState';

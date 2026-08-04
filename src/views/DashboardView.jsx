@@ -3,20 +3,7 @@ import {
   CreditCard,
   CheckSquare,
   Plus,
-  Search,
-  BarChart3,
-  CalendarDays,
-  PiggyBank,
-  Clock,
-  Flame,
-  CheckCircle2,
-  Edit3,
   Trash2,
-  Copy,
-  TrendingUp,
-  ArrowRight,
-  Sparkles,
-  Zap,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { EmptyState } from '../components/EmptyState';
@@ -114,18 +101,12 @@ const SectionHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, actions
 
 export const DashboardView = () => {
   const {
-    profile,
     getGreeting,
     expenses,
     todos,
     monthlyBudget,
-    monthlyExpensesTotal,
     todayExpensesTotal,
     remainingBudget,
-    budgetUsagePercent,
-    pendingTasksCount,
-    completedTasksCount,
-    totalTasksCount,
     taskCompletionPercent,
     setIsQuickAddExpenseOpen,
     setIsTaskModalOpen,
@@ -133,20 +114,16 @@ export const DashboardView = () => {
     setActivePage,
     toggleTodoCompleted,
     deleteExpense,
-    duplicateExpense,
-    setEditingExpense,
     deleteTodo,
-    setEditingTask,
     isOverBudget,
   } = useApp();
 
-  const [expSearch, setExpSearch] = useState('');
-  const [expCat, setExpCat]       = useState('All');
-  const [taskTab, setTaskTab]     = useState('all');
+  const [expSearch] = useState('');
+  const [expCat]    = useState('All');
+  const [taskTab]   = useState('all');
 
-  const todayStr     = new Date().toISOString().split('T')[0];
-  const todayTasks   = todos.filter(t => t.dueDate === todayStr);
-  const highPriCount = todos.filter(t => t.priority === 'High' && !t.completed).length;
+  const todayStr   = new Date().toISOString().split('T')[0];
+  const todayTasks = todos.filter(t => t.dueDate === todayStr);
 
   /* Filtered expenses */
   const filteredExp = expenses.filter(e => {
