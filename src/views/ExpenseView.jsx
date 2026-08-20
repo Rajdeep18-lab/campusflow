@@ -17,15 +17,15 @@ import { useApp } from '../context/AppContext';
 import { EmptyState } from '../components/EmptyState';
 
 const CATEGORY_DATA = {
-  Food:          { emoji: '🍲', color: '#10b981', label: 'Food & Dining' },
-  Travel:        { emoji: '🚌', color: '#06b6d4', label: 'Travel' },
-  Books:         { emoji: '📚', color: '#3b82f6', label: 'Books' },
-  Hostel:        { emoji: '🏠', color: '#8b5cf6', label: 'Hostel' },
-  Mess:          { emoji: '🍱', color: '#ec4899', label: 'Mess' },
-  Shopping:      { emoji: '🛍️', color: '#f59e0b', label: 'Shopping' },
-  Recharge:      { emoji: '📱', color: '#14b8a6', label: 'Recharge' },
-  Entertainment: { emoji: '🎬', color: '#6366f1', label: 'Entertainment' },
-  Others:        { emoji: '💡', color: '#64748b', label: 'Others' },
+  Food:          { emoji: '🍲', color: '#F0A24B', label: 'Food & Dining' },
+  Travel:        { emoji: '🚌', color: '#6FB6E8', label: 'Travel' },
+  Books:         { emoji: '📚', color: '#8A7FE8', label: 'Books' },
+  Hostel:        { emoji: '🏠', color: '#E8875B', label: 'Hostel' },
+  Mess:          { emoji: '🍱', color: '#4FBF8B', label: 'Mess' },
+  Shopping:      { emoji: '🛍️', color: '#E86FA8', label: 'Shopping' },
+  Recharge:      { emoji: '📱', color: '#5BCFE0', label: 'Recharge' },
+  Entertainment: { emoji: '🎬', color: '#C98AE8', label: 'Entertainment' },
+  Others:        { emoji: '💡', color: '#9AA5B8', label: 'Others' },
 };
 
 const CATEGORIES = ['All', ...Object.keys(CATEGORY_DATA)];
@@ -81,9 +81,9 @@ export const ExpenseView = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* ── Page Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
             Expense Manager
           </h1>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
@@ -103,37 +103,37 @@ export const ExpenseView = () => {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
         <div className="stat-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="stat-label">Today's Expense</span>
-            <div className="stat-icon-box" style={{ background: 'rgba(16,185,129,0.1)' }}>
+            <div className="stat-icon-box" style={{ background: 'rgba(52,199,123,0.12)' }}>
               <TrendingUp size={16} color="var(--color-success)" />
             </div>
           </div>
-          <div className="stat-value" style={{ color: 'var(--color-success)' }}>₹{todayExpensesTotal.toLocaleString('en-IN')}</div>
+          <div className="stat-value" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-success)' }}>₹{todayExpensesTotal.toLocaleString('en-IN')}</div>
           <div className="stat-sub">{expenses.filter(e => e.date === todayStr).length} transactions today</div>
         </div>
 
         <div className="stat-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="stat-label">Monthly Total</span>
-            <div className="stat-icon-box" style={{ background: 'rgba(99,102,241,0.1)' }}>
-              <CalendarDays size={16} color="#6366f1" />
+            <div className="stat-icon-box" style={{ background: 'rgba(108,142,245,0.12)' }}>
+              <CalendarDays size={16} color="var(--accent-blue)" />
             </div>
           </div>
-          <div className="stat-value">₹{monthlyExpensesTotal.toLocaleString('en-IN')}</div>
+          <div className="stat-value" style={{ fontFamily: 'var(--font-mono)' }}>₹{monthlyExpensesTotal.toLocaleString('en-IN')}</div>
           <div className="stat-sub">{expenses.length} total transactions</div>
         </div>
 
         <div className="stat-card" onClick={() => setIsBudgetModalOpen(true)} style={{ cursor: 'pointer' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="stat-label">Budget Remaining</span>
-            <div className="stat-icon-box" style={{ background: 'rgba(139,92,246,0.1)' }}>
-              <PiggyBank size={16} color="#8b5cf6" />
+            <div className="stat-icon-box" style={{ background: 'rgba(232,163,61,0.12)' }}>
+              <PiggyBank size={16} color="var(--accent)" />
             </div>
           </div>
-          <div className="stat-value" style={{ color: isOverBudget ? 'var(--color-danger)' : undefined }}>
+          <div className="stat-value" style={{ fontFamily: 'var(--font-mono)', color: isOverBudget ? 'var(--color-danger)' : undefined }}>
             {monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Not set'}
           </div>
           <div className="stat-sub">
@@ -264,7 +264,7 @@ export const ExpenseView = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 14,
-                  padding: '13px 18px',
+                  padding: '12px 16px',
                   borderBottom: i < filteredExpenses.length - 1 ? '1px solid var(--border-subtle)' : 'none',
                   transition: 'background 0.12s',
                   borderLeft: `3px solid ${cd.color}`,
@@ -307,7 +307,7 @@ export const ExpenseView = () => {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
                     {/* Date */}
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'var(--font-mono)' }}>
                       <CalendarDays size={10} />
                       {formatDate(exp.date)}
                     </span>
@@ -326,6 +326,7 @@ export const ExpenseView = () => {
                 {/* Amount */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
                   <span style={{
+                    fontFamily: 'var(--font-mono)',
                     fontSize: '1rem', fontWeight: 800, color: 'var(--color-success)',
                     letterSpacing: '-0.025em', minWidth: 72, textAlign: 'right',
                   }}>

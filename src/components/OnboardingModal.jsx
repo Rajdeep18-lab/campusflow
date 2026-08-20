@@ -41,27 +41,28 @@ export const OnboardingModal = () => {
         {/* Top accent bar */}
         <div style={{
           height: 4,
-          background: 'linear-gradient(90deg, #10b981, #059669, #14b8a6)',
+          background: 'linear-gradient(90deg, #E8A33D, #34C77B, #6C8EF5)',
         }} />
 
-        <div style={{ padding: '40px 32px 36px' }}>
+        <div style={{ padding: '32px 24px' }}>
           {/* Icon */}
           <div style={{
             width: 64,
             height: 64,
-            borderRadius: 22,
-            background: 'linear-gradient(135deg, #10b981, #059669)',
+            borderRadius: 'var(--radius-2xl)',
+            background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 20px',
-            boxShadow: '0 8px 28px rgba(16,185,129,0.35)',
+            boxShadow: '0 8px 28px rgba(232,163,61,0.35)',
           }}>
-            <GraduationCap size={30} color="#fff" strokeWidth={2} />
+            <GraduationCap size={32} color="#0F172A" strokeWidth={2} />
           </div>
 
           {/* Title */}
           <h1 style={{
+            fontFamily: 'var(--font-heading)',
             fontSize: '1.5rem',
             fontWeight: 800,
             letterSpacing: '-0.03em',
@@ -75,9 +76,9 @@ export const OnboardingModal = () => {
             fontSize: '0.875rem',
             color: 'var(--text-muted)',
             lineHeight: 1.65,
-            marginBottom: 28,
+            marginBottom: 24,
             maxWidth: 320,
-            margin: '0 auto 28px',
+            margin: '0 auto 24px',
           }}>
             Your personal hub for tracking expenses and managing tasks — beautifully, privately, offline.
           </p>

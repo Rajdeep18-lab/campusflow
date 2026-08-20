@@ -156,7 +156,7 @@ export const GlobalSearchModal = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '10px 12px',
+                          padding: '8px 12px',
                           borderRadius: 'var(--radius-md)',
                           background: 'var(--bg-tertiary)',
                           border: '1px solid var(--border-subtle)',
@@ -174,11 +174,12 @@ export const GlobalSearchModal = () => {
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                           <div style={{
-                            width: 30, height: 30, borderRadius: 'var(--radius-sm)',
+                            width: 32, height: 32, borderRadius: 'var(--radius-sm)',
                             background: 'var(--accent-muted)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             flexShrink: 0,
-                            fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent)',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)',
                           }}>₹</div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{
@@ -189,11 +190,12 @@ export const GlobalSearchModal = () => {
                               {exp.title}
                             </div>
                             <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                              {exp.category} · {exp.date}
+                              {exp.category} · <span style={{ fontFamily: 'var(--font-mono)' }}>{exp.date}</span>
                             </div>
                           </div>
                         </div>
                         <div style={{
+                          fontFamily: 'var(--font-mono)',
                           fontSize: '0.875rem', fontWeight: 700,
                           color: 'var(--color-success)',
                           flexShrink: 0, marginLeft: 12,
@@ -220,7 +222,7 @@ export const GlobalSearchModal = () => {
                     alignItems: 'center',
                     gap: 6,
                   }}>
-                    <CheckSquare size={11} color="#3b82f6" />
+                    <CheckSquare size={11} color="var(--accent-blue)" />
                     Tasks ({filteredTodos.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -235,7 +237,7 @@ export const GlobalSearchModal = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '10px 12px',
+                          padding: '8px 12px',
                           borderRadius: 'var(--radius-md)',
                           background: 'var(--bg-tertiary)',
                           border: '1px solid var(--border-subtle)',
@@ -244,8 +246,8 @@ export const GlobalSearchModal = () => {
                           gap: 10,
                         }}
                         onMouseEnter={e => {
-                          e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)';
-                          e.currentTarget.style.background = 'rgba(59,130,246,0.05)';
+                          e.currentTarget.style.borderColor = 'rgba(108,142,245,0.3)';
+                          e.currentTarget.style.background = 'rgba(108,142,245,0.05)';
                         }}
                         onMouseLeave={e => {
                           e.currentTarget.style.borderColor = 'var(--border-subtle)';
@@ -269,7 +271,7 @@ export const GlobalSearchModal = () => {
                               {todo.title}
                             </div>
                             <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                              {todo.priority} priority · Due {todo.dueDate}
+                              {todo.priority} priority · Due <span style={{ fontFamily: 'var(--font-mono)' }}>{todo.dueDate}</span>
                             </div>
                           </div>
                         </div>

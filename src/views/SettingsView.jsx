@@ -24,7 +24,7 @@ const SettingsSection = ({ title, subtitle, icon: Icon, iconColor = 'var(--accen
           width: 34,
           height: 34,
           borderRadius: 'var(--radius-md)',
-          background: 'rgba(16,185,129,0.08)',
+          background: 'var(--accent-muted)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -34,6 +34,7 @@ const SettingsSection = ({ title, subtitle, icon: Icon, iconColor = 'var(--accen
         </div>
         <div>
           <div style={{
+            fontFamily: 'var(--font-heading)',
             fontSize: '0.9375rem',
             fontWeight: 700,
             color: 'var(--text-primary)',
@@ -102,6 +103,7 @@ export const SettingsView = () => {
       {/* Page Header */}
       <div>
         <h1 style={{
+          fontFamily: 'var(--font-heading)',
           fontSize: '1.375rem', fontWeight: 800,
           letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2,
         }}>

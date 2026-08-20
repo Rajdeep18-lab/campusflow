@@ -17,6 +17,7 @@ export const EmptyState = ({
       )}
 
       <h3 style={{
+        fontFamily: 'var(--font-heading)',
         fontSize: '1.0625rem',
         fontWeight: 700,
         color: 'var(--text-primary)',

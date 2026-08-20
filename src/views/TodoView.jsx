@@ -15,9 +15,9 @@ import { useApp } from '../context/AppContext';
 import { EmptyState } from '../components/EmptyState';
 
 const PRIORITY_CONFIG = {
-  High:   { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.25)'  },
-  Medium: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.25)' },
-  Low:    { color: '#10b981', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.25)' },
+  High:   { color: 'var(--color-danger)', bg: 'var(--color-danger-bg)',  border: 'rgba(229,72,77,0.25)'  },
+  Medium: { color: 'var(--accent-blue)', bg: 'var(--color-info-bg)',    border: 'rgba(108,142,245,0.25)' },
+  Low:    { color: 'var(--color-success)', bg: 'var(--color-success-bg)', border: 'rgba(52,199,123,0.25)' },
 };
 
 const formatDate = (dateStr) => {
@@ -77,9 +77,9 @@ export const TodoView = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* ── Page Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
             Task Manager
           </h1>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
@@ -93,12 +93,12 @@ export const TodoView = () => {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: 12 }}>
         {[
-          { label: 'Total Tasks', value: totalTasksCount, sub: 'All time', icon: ClipboardList, iconBg: 'rgba(20,184,166,0.1)', iconColor: '#14b8a6' },
-          { label: 'Pending', value: pendingTasksCount, sub: 'To complete', icon: Clock, iconBg: 'rgba(245,158,11,0.1)', iconColor: '#f59e0b' },
-          { label: 'Completed', value: completedTasksCount, sub: `${taskCompletionPercent}% done`, icon: CheckCircle2, iconBg: 'rgba(16,185,129,0.1)', iconColor: 'var(--color-success)' },
-          { label: 'Overdue', value: overdueCnt, sub: overdueCnt > 0 ? 'Needs attention!' : 'All good 🎉', icon: AlertTriangle, iconBg: 'rgba(239,68,68,0.1)', iconColor: 'var(--color-danger)' },
+          { label: 'Total Tasks', value: totalTasksCount, sub: 'All time', icon: ClipboardList, iconBg: 'rgba(91,207,224,0.12)', iconColor: '#5BCFE0' },
+          { label: 'Pending', value: pendingTasksCount, sub: 'To complete', icon: Clock, iconBg: 'rgba(232,163,61,0.12)', iconColor: 'var(--accent)' },
+          { label: 'Completed', value: completedTasksCount, sub: `${taskCompletionPercent}% done`, icon: CheckCircle2, iconBg: 'rgba(52,199,123,0.12)', iconColor: 'var(--color-success)' },
+          { label: 'Overdue', value: overdueCnt, sub: overdueCnt > 0 ? 'Needs attention!' : 'All good 🎉', icon: AlertTriangle, iconBg: 'rgba(229,72,77,0.12)', iconColor: 'var(--color-danger)' },
         ].map(({ label, value, sub, icon: Icon, iconBg, iconColor }) => (
           <div key={label} className="stat-card">
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -107,7 +107,7 @@ export const TodoView = () => {
                 <Icon size={16} color={iconColor} strokeWidth={2} />
               </div>
             </div>
-            <div className="stat-value">{value}</div>
+            <div className="stat-value" style={{ fontFamily: 'var(--font-mono)' }}>{value}</div>
             <div className="stat-sub">{sub}</div>
           </div>
         ))}
@@ -118,7 +118,7 @@ export const TodoView = () => {
         <div className="card" style={{ padding: '14px 20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Completion Progress</span>
-            <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: taskCompletionPercent >= 80 ? 'var(--color-success)' : 'var(--text-primary)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', fontWeight: 700, color: taskCompletionPercent >= 80 ? 'var(--color-success)' : 'var(--text-primary)' }}>
               {completedTasksCount} / {totalTasksCount}
             </span>
           </div>
@@ -126,7 +126,7 @@ export const TodoView = () => {
             <div style={{
               height: '100%', borderRadius: 99,
               width: `${taskCompletionPercent}%`,
-              background: 'linear-gradient(90deg, #10b981, #059669)',
+              background: 'linear-gradient(90deg, #E8A33D, #34C77B)',
               transition: 'width 0.8s cubic-bezier(0.16,1,0.3,1)',
             }} />
           </div>
@@ -134,7 +134,7 @@ export const TodoView = () => {
       )}
 
       {/* ── Controls ── */}
-      <div className="card" style={{ padding: '12px 14px' }}>
+      <div className="card" style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {/* Tabs */}
           <div className="tab-group">
@@ -154,7 +154,7 @@ export const TodoView = () => {
                 {tab.label}
                 {tab.id === 'overdue' && overdueCnt > 0 && (
                   <span style={{
-                    width: 6, height: 6, borderRadius: '50%', background: '#ef4444',
+                    width: 6, height: 6, borderRadius: '50%', background: 'var(--color-danger)',
                     position: 'absolute', top: 3, right: 3,
                   }} />
                 )}
@@ -171,13 +171,13 @@ export const TodoView = () => {
                 onChange={e => setSearchTerm(e.target.value)}
                 placeholder="Search tasks..."
                 className="form-input"
-                style={{ paddingLeft: 30, height: 34, width: 160, fontSize: '0.8125rem' }}
+                style={{ paddingLeft: 30, height: 36, width: 160, fontSize: '0.8125rem' }}
               />
             </div>
-            <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="form-select" style={{ height: 34, width: 'auto', fontSize: '0.8125rem', paddingRight: 28 }}>
+            <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="form-select" style={{ height: 36, width: 'auto', fontSize: '0.8125rem', paddingRight: 28 }}>
               <option value="All">All Priorities</option>
               <option value="High">🔴 High</option>
-              <option value="Medium">🟡 Medium</option>
+              <option value="Medium">🔵 Medium</option>
               <option value="Low">🟢 Low</option>
             </select>
           </div>
@@ -225,7 +225,7 @@ export const TodoView = () => {
                 <button
                   onClick={() => toggleTodoCompleted(todo.id)}
                   style={{
-                    width: 20, height: 20,
+                    width: 18, height: 18,
                     borderRadius: 6,
                     border: `2px solid ${todo.completed ? 'var(--accent)' : pc.color}`,
                     background: todo.completed ? 'var(--accent)' : 'transparent',
@@ -238,7 +238,7 @@ export const TodoView = () => {
                 >
                   {todo.completed && (
                     <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                      <path d="M1 4L4 7L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M1 4L4 7L10 1" stroke="#0F172A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
@@ -271,7 +271,7 @@ export const TodoView = () => {
                     )}
                   </div>
                   {/* Due date */}
-                  <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: overdue ? '#ef4444' : 'var(--text-muted)', fontWeight: overdue ? 600 : 400 }}>
+                  <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: overdue ? 'var(--color-danger)' : 'var(--text-muted)', fontWeight: overdue ? 600 : 400, fontFamily: 'var(--font-mono)' }}>
                     <CalendarDays size={11} />
                     <span>Due {formatDate(todo.dueDate)}</span>
                     {todo.completed && (

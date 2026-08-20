@@ -14,16 +14,16 @@ const CATEGORY_EMOJIS = {
 };
 
 const CATEGORY_COLORS = {
-  Food: '#10b981', Travel: '#06b6d4', Books: '#3b82f6',
-  Hostel: '#8b5cf6', Mess: '#ec4899', Shopping: '#f59e0b',
-  Recharge: '#14b8a6', Entertainment: '#6366f1', Others: '#64748b',
+  Food: '#F0A24B', Travel: '#6FB6E8', Books: '#8A7FE8',
+  Hostel: '#E8875B', Mess: '#4FBF8B', Shopping: '#E86FA8',
+  Recharge: '#5BCFE0', Entertainment: '#C98AE8', Others: '#9AA5B8',
 };
 
 /* ─── Priority Badge ─── */
 const PriorityBadge = ({ priority }) => {
   const map = {
     High:   'badge badge-danger',
-    Medium: 'badge badge-warning',
+    Medium: 'badge badge-info',
     Low:    'badge badge-success',
   };
   return <span className={map[priority] || 'badge badge-neutral'}>{priority}</span>;
@@ -33,7 +33,7 @@ const PriorityBadge = ({ priority }) => {
 const SectionHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, actions }) => (
   <div style={{
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
     flexWrap: 'wrap',
@@ -41,8 +41,8 @@ const SectionHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, actions
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{
-        width: 38,
-        height: 38,
+        width: 36,
+        height: 36,
         borderRadius: 'var(--radius-md)',
         background: iconBg,
         display: 'flex',
@@ -55,6 +55,7 @@ const SectionHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, actions
       </div>
       <div>
         <h2 style={{
+          fontFamily: 'var(--font-heading)',
           fontSize: '1.125rem',
           fontWeight: 700,
           color: 'var(--text-primary)',
@@ -66,7 +67,7 @@ const SectionHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, actions
         <p style={{
           fontSize: '0.75rem',
           color: 'var(--text-muted)',
-          marginTop: 3,
+          marginTop: 2,
           fontWeight: 400,
         }}>
           {subtitle}
@@ -130,16 +131,19 @@ export const DashboardView = () => {
       {/* ═══════════════════════════════════════════════
           TODAY SNAPSHOT & GREETING HEADER
          ═══════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════
+          TODAY SNAPSHOT & GREETING HEADER
+         ═══════════════════════════════════════════════ */}
       <div className="today-snapshot">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h1 style={{ fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+              <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
                 {getGreeting()}
               </h1>
             </div>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-              Here is your daily snapshot for {new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' })}.
+              Here is your daily snapshot for <span style={{ fontFamily: 'var(--font-mono)' }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' })}</span>.
             </p>
           </div>
 
@@ -165,52 +169,52 @@ export const DashboardView = () => {
         }}>
           {/* Today's Expense */}
           <div style={{
-            background: 'var(--bg-card)', padding: '12px 14px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
           }}>
             <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Today's Spend
             </div>
-            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em', marginTop: 2 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em', marginTop: 2 }}>
               ₹{todayExpensesTotal.toLocaleString('en-IN')}
             </div>
           </div>
 
           {/* Today's Tasks */}
           <div style={{
-            background: 'var(--bg-card)', padding: '12px 14px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
           }}>
             <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Today's Tasks
             </div>
-            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: '#3b82f6', letterSpacing: '-0.02em', marginTop: 2 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--accent-blue)', letterSpacing: '-0.02em', marginTop: 2 }}>
               {todayTasks.filter(t => !t.completed).length} pending
             </div>
           </div>
 
           {/* Remaining Budget */}
           <div style={{
-            background: 'var(--bg-card)', padding: '12px 14px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)', cursor: 'pointer',
           }} onClick={() => setIsBudgetModalOpen(true)}>
             <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Budget Left
             </div>
-            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: isOverBudget ? 'var(--color-danger)' : 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: 2 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color: isOverBudget ? 'var(--color-danger)' : 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: 2 }}>
               {monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Set Budget'}
             </div>
           </div>
 
           {/* Monthly Progress */}
           <div style={{
-            background: 'var(--bg-card)', padding: '12px 14px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
           }}>
             <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Task Completion
             </div>
-            <div style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.02em', marginTop: 2 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.02em', marginTop: 2 }}>
               {taskCompletionPercent}% done
             </div>
           </div>
@@ -252,7 +256,7 @@ export const DashboardView = () => {
             />
           ) : (
             filteredExp.slice(0, 5).map((exp, i) => {
-              const catColor = CATEGORY_COLORS[exp.category] || '#64748b';
+              const catColor = CATEGORY_COLORS[exp.category] || '#9AA5B8';
               const catEmoji = CATEGORY_EMOJIS[exp.category] || '💡';
               return (
                 <div
@@ -261,7 +265,7 @@ export const DashboardView = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '12px 18px',
+                    padding: '12px 16px',
                     borderBottom: i < Math.min(filteredExp.length, 5) - 1 ? '1px solid var(--border-subtle)' : 'none',
                     borderLeft: `3px solid ${catColor}`,
                     transition: 'background 0.12s',
@@ -271,7 +275,7 @@ export const DashboardView = () => {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     <div style={{
-                      width: 34, height: 34, borderRadius: 'var(--radius-md)',
+                      width: 36, height: 36, borderRadius: 'var(--radius-md)',
                       background: `${catColor}15`, border: `1px solid ${catColor}25`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: '1rem', flexShrink: 0,
@@ -283,12 +287,12 @@ export const DashboardView = () => {
                         {exp.title}
                       </div>
                       <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 1 }}>
-                        {exp.category} · {exp.date}
+                        {exp.category} · <span style={{ fontFamily: 'var(--font-mono)' }}>{exp.date}</span>
                       </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    <span style={{ fontSize: '0.9375rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em' }}>
                       ₹{exp.amount.toLocaleString('en-IN')}
                     </span>
                     <button onClick={() => deleteExpense(exp.id)} className="btn-icon" style={{ color: 'var(--color-danger)' }} title="Delete">
@@ -308,8 +312,8 @@ export const DashboardView = () => {
       <section>
         <SectionHeader
           icon={CheckSquare}
-          iconBg="rgba(59,130,246,0.1)"
-          iconColor="#3b82f6"
+          iconBg="rgba(108,142,245,0.12)"
+          iconColor="var(--accent-blue)"
           title="Daily Tasks &amp; Goals"
           subtitle="Stay on top of assignments, lab submissions, and exams"
           actions={
@@ -337,8 +341,8 @@ export const DashboardView = () => {
             />
           ) : (
             filteredTodos.slice(0, 5).map((todo, i) => {
-              const priorityColors = { High: '#ef4444', Medium: '#f59e0b', Low: '#10b981' };
-              const pColor = priorityColors[todo.priority] || '#64748b';
+              const priorityColors = { High: 'var(--color-danger)', Medium: 'var(--accent-blue)', Low: 'var(--color-success)' };
+              const pColor = priorityColors[todo.priority] || '#9AA5B8';
               return (
                 <div
                   key={todo.id}
@@ -346,7 +350,7 @@ export const DashboardView = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '12px 18px',
+                    padding: '12px 16px',
                     borderBottom: i < Math.min(filteredTodos.length, 5) - 1 ? '1px solid var(--border-subtle)' : 'none',
                     borderLeft: `3px solid ${pColor}`,
                     opacity: todo.completed ? 0.65 : 1,
@@ -360,7 +364,7 @@ export const DashboardView = () => {
                       type="checkbox"
                       checked={todo.completed}
                       onChange={() => toggleTodoCompleted(todo.id)}
-                      style={{ width: 15, height: 15, accentColor: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
+                      style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
                     />
                     <div style={{ minWidth: 0 }}>
                       <div style={{
@@ -372,7 +376,7 @@ export const DashboardView = () => {
                         {todo.title}
                       </div>
                       <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 1 }}>
-                        Due {todo.dueDate}
+                        Due <span style={{ fontFamily: 'var(--font-mono)' }}>{todo.dueDate}</span>
                       </div>
                     </div>
                   </div>

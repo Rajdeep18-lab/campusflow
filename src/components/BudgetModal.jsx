@@ -46,7 +46,7 @@ export const BudgetModal = () => {
               <PiggyBank size={17} color="#8b5cf6" strokeWidth={2} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                 Set Monthly Budget
               </h3>
               <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>
@@ -68,6 +68,7 @@ export const BudgetModal = () => {
                 <span style={{
                   position: 'absolute', left: 12, top: '50%',
                   transform: 'translateY(-50%)',
+                  fontFamily: 'var(--font-mono)',
                   fontSize: '1.125rem', fontWeight: 700,
                   color: 'var(--text-secondary)',
                   pointerEvents: 'none',
@@ -80,7 +81,7 @@ export const BudgetModal = () => {
                   onChange={e => setInputVal(e.target.value)}
                   placeholder="e.g. 5000"
                   className="form-input"
-                  style={{ paddingLeft: 28, fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em' }}
+                  style={{ paddingLeft: 28, fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em' }}
                   autoFocus
                   required
                 />

@@ -71,7 +71,7 @@ export const TaskModal = () => {
               <CheckSquare size={17} color="#3b82f6" strokeWidth={2} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                 {editingTask ? 'Edit Task' : 'Create Task'}
               </h3>
               <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>
@@ -118,7 +118,7 @@ export const TaskModal = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: 6,
-                    padding: '9px 8px',
+                    padding: '8px',
                     borderRadius: 'var(--radius-md)',
                     border: `${priority === p.level ? 1.5 : 1}px solid ${priority === p.level ? p.color : 'var(--border-base)'}`,
                     background: priority === p.level ? p.bg : 'var(--bg-tertiary)',
@@ -130,7 +130,7 @@ export const TaskModal = () => {
                   }}
                 >
                   <span style={{
-                    width: 7, height: 7,
+                    width: 8, height: 8,
                     borderRadius: '50%',
                     background: p.dot,
                     display: 'inline-block',
@@ -150,7 +150,7 @@ export const TaskModal = () => {
               value={dueDate}
               onChange={e => setDueDate(e.target.value)}
               className="form-input"
-              style={{ fontSize: '0.875rem' }}
+              style={{ fontSize: '0.875rem', fontFamily: 'var(--font-mono)' }}
               required
             />
           </div>

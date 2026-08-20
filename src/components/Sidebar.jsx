@@ -36,12 +36,13 @@ export const Sidebar = ({ closeMobileSidebar }) => {
     >
       {/* Logo / Brand */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <GraduationCap size={17} color="#fff" strokeWidth={2.2} />
+        <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, #E8A33D, #d9922c)' }}>
+          <GraduationCap size={18} color="#0F172A" strokeWidth={2} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{
-            fontSize: '0.875rem',
+            fontFamily: 'var(--font-heading)',
+            fontSize: '0.9375rem',
             fontWeight: 700,
             color: 'var(--text-primary)',
             letterSpacing: '-0.02em',
@@ -56,7 +57,7 @@ export const Sidebar = ({ closeMobileSidebar }) => {
             fontSize: '0.6875rem',
             color: 'var(--text-muted)',
             fontWeight: 500,
-            marginTop: 1,
+            marginTop: 2,
             whiteSpace: 'nowrap',
           }}>
             Expense & Task Hub
@@ -67,7 +68,7 @@ export const Sidebar = ({ closeMobileSidebar }) => {
       {/* Navigation */}
       <nav className="sidebar-nav">
         <div className="sidebar-section-label">Menu</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
             const isActive = activePage === id;
             return (
@@ -78,10 +79,10 @@ export const Sidebar = ({ closeMobileSidebar }) => {
                 aria-current={isActive ? 'page' : undefined}
               >
                 <Icon
-                  size={15}
+                  size={16}
                   className="nav-icon"
                   style={{ color: isActive ? 'var(--accent)' : undefined }}
-                  strokeWidth={isActive ? 2.2 : 1.8}
+                  strokeWidth={isActive ? 2 : 1.8}
                 />
                 <span>{label}</span>
               </button>
@@ -98,11 +99,12 @@ export const Sidebar = ({ closeMobileSidebar }) => {
             borderRadius: 'var(--radius-md)',
             background: 'var(--accent-muted)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 10px',
+            margin: '0 auto 8px',
           }}>
-            <Sparkles size={15} color="var(--accent)" />
+            <Sparkles size={16} color="var(--accent)" strokeWidth={2} />
           </div>
           <div style={{
+            fontFamily: 'var(--font-heading)',
             fontSize: '0.75rem',
             fontWeight: 700,
             color: 'var(--text-primary)',
@@ -114,7 +116,7 @@ export const Sidebar = ({ closeMobileSidebar }) => {
             fontSize: '0.6875rem',
             color: 'var(--text-muted)',
             lineHeight: 1.5,
-            marginBottom: 10,
+            marginBottom: 12,
           }}>
             Track. Manage. Achieve.
           </div>
@@ -125,9 +127,9 @@ export const Sidebar = ({ closeMobileSidebar }) => {
               padding: '6px 0',
               borderRadius: 'var(--radius-sm)',
               background: 'var(--accent)',
-              color: '#fff',
+              color: '#0F172A',
               fontSize: '0.6875rem',
-              fontWeight: 600,
+              fontWeight: 700,
               border: 'none',
               cursor: 'pointer',
               transition: 'opacity 0.15s',

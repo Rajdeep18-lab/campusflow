@@ -20,9 +20,9 @@ const CATEGORY_EMOJIS = {
 };
 
 const CATEGORY_COLORS = {
-  Food: '#10b981', Travel: '#06b6d4', Books: '#3b82f6',
-  Hostel: '#8b5cf6', Mess: '#ec4899', Shopping: '#f59e0b',
-  Recharge: '#14b8a6', Entertainment: '#6366f1', Others: '#64748b',
+  Food: '#F0A24B', Travel: '#6FB6E8', Books: '#8A7FE8',
+  Hostel: '#E8875B', Mess: '#4FBF8B', Shopping: '#E86FA8',
+  Recharge: '#5BCFE0', Entertainment: '#C98AE8', Others: '#9AA5B8',
 };
 
 // Format a date string to a readable label
@@ -89,9 +89,9 @@ export const CalendarView = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* ── Page Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
             Calendar
           </h1>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
@@ -116,49 +116,49 @@ export const CalendarView = () => {
         flexWrap: 'wrap',
       }}>
         {[
-          { label: 'Month Spending', value: `₹${monthlyTotal.toLocaleString('en-IN')}`, color: 'var(--color-success)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.15)' },
-          { label: 'Tasks Due This Month', value: monthlyTasksDue, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.15)' },
-          { label: 'Avg Daily Spend', value: daysInMonth > 0 ? `₹${Math.round(monthlyTotal / new Date(year, month + 1, 0).getDate()).toLocaleString('en-IN')}` : '₹0', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.15)' },
+          { label: 'Month Spending', value: `₹${monthlyTotal.toLocaleString('en-IN')}`, color: 'var(--color-success)', bg: 'rgba(52,199,123,0.12)', border: 'rgba(52,199,123,0.2)' },
+          { label: 'Tasks Due This Month', value: monthlyTasksDue, color: 'var(--accent-blue)', bg: 'rgba(108,142,245,0.12)', border: 'rgba(108,142,245,0.2)' },
         ].map(({ label, value, color, bg, border }) => (
           <div key={label} style={{
-            flex: '1 1 140px',
-            background: bg,
-            border: `1px solid ${border}`,
-            borderRadius: 'var(--radius-lg)',
-            padding: '12px 16px',
+            background: bg, border: `1px solid ${border}`,
+            borderRadius: 'var(--radius-md)', padding: '10px 14px',
+            display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 160,
           }}>
-            <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>{label}</div>
-            <div style={{ fontSize: '1.125rem', fontWeight: 800, color, letterSpacing: '-0.025em' }}>{value}</div>
+            <div>
+              <div style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {label}
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color, marginTop: 1 }}>
+                {value}
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* ── Main Grid: Calendar + Detail Pane ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 20, alignItems: 'start' }} className="calendar-layout">
-
-        {/* ── Calendar Card ── */}
-        <div className="card">
-          {/* Month navigation */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '14px 18px', borderBottom: '1px solid var(--border-base)',
-          }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+      {/* ── Main Layout: Calendar Grid + Selected Day Pane ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, alignItems: 'flex-start' }} className="cal-layout-grid">
+        {/* ── Left Column: Calendar ── */}
+        <div className="card" style={{ padding: 14 }}>
+          {/* Controls Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               {MONTH_NAMES[month]} {year}
             </h2>
             <div style={{ display: 'flex', gap: 4 }}>
-              <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="btn-icon" title="Previous month">
-                <ChevronLeft size={15} />
+              <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="btn-icon" aria-label="Previous Month">
+                <ChevronLeft size={16} />
               </button>
-              <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="btn-icon" title="Next month">
-                <ChevronRight size={15} />
+              <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="btn-icon" aria-label="Next Month">
+                <ChevronRight size={16} />
               </button>
             </div>
           </div>
 
-          <div style={{ padding: '12px 14px 14px' }}>
+          {/* Calendar Table */}
+          <div>
             {/* Day of week headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3, marginBottom: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
               {DAYS_OF_WEEK.map((d, i) => (
                 <div key={d} style={{
                   textAlign: 'center',
@@ -166,7 +166,7 @@ export const CalendarView = () => {
                   fontWeight: 700,
                   letterSpacing: '0.07em',
                   textTransform: 'uppercase',
-                  color: i === 0 || i === 6 ? 'rgba(139,92,246,0.7)' : 'var(--text-muted)',
+                  color: i === 0 || i === 6 ? 'rgba(138,127,232,0.85)' : 'var(--text-muted)',
                   padding: '3px 0',
                 }}>
                   {d}
@@ -175,7 +175,7 @@ export const CalendarView = () => {
             </div>
 
             {/* Calendar cells grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 3 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
               {calendarCells.map((day, idx) => {
                 if (!day) return <div key={`e-${idx}`} style={{ minHeight: 68 }} />;
 
@@ -201,6 +201,7 @@ export const CalendarView = () => {
                   >
                     {/* Day number */}
                     <span style={{
+                      fontFamily: 'var(--font-mono)',
                       fontSize: '0.8125rem',
                       fontWeight: isSelected || isToday ? 700 : isWeekend ? 600 : 500,
                       color: isSelected
@@ -208,7 +209,7 @@ export const CalendarView = () => {
                         : isToday
                         ? 'var(--accent)'
                         : isWeekend
-                        ? 'rgba(139,92,246,0.85)'
+                        ? 'rgba(138,127,232,0.85)'
                         : 'var(--text-secondary)',
                       lineHeight: 1,
                     }}>
@@ -218,9 +219,10 @@ export const CalendarView = () => {
                     {/* Expense amount */}
                     {dayData.total > 0 && (
                       <span style={{
+                        fontFamily: 'var(--font-mono)',
                         fontSize: '0.5625rem',
                         fontWeight: 700,
-                        color: hasWarning ? '#f59e0b' : 'var(--color-success)',
+                        color: hasWarning ? '#E8A33D' : 'var(--color-success)',
                         letterSpacing: '-0.02em',
                         marginTop: 2,
                         lineHeight: 1,
@@ -234,8 +236,8 @@ export const CalendarView = () => {
                     {/* Task count + indicator */}
                     {dayData.todos.length > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginTop: 1 }}>
-                        <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#3b82f6', flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.5rem', color: '#3b82f6', fontWeight: 700, lineHeight: 1 }}>
+                        <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent-blue)', flexShrink: 0 }} />
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: 'var(--accent-blue)', fontWeight: 700, lineHeight: 1 }}>
                           {dayData.todos.length}
                         </span>
                       </div>

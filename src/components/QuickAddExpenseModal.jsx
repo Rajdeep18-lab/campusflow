@@ -80,10 +80,10 @@ export const QuickAddExpenseModal = () => {
               background: 'var(--accent-muted)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <CreditCard size={17} color="var(--accent)" strokeWidth={2} />
+              <CreditCard size={18} color="var(--accent)" strokeWidth={2} />
             </div>
             <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
                 {editingExpense ? 'Edit Expense' : 'Log Expense'}
               </h3>
               <p style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>
@@ -111,6 +111,7 @@ export const QuickAddExpenseModal = () => {
               <span style={{
                 position: 'absolute', left: 12, top: '50%',
                 transform: 'translateY(-50%)',
+                fontFamily: 'var(--font-mono)',
                 fontSize: '1rem', fontWeight: 700,
                 color: 'var(--text-secondary)',
                 pointerEvents: 'none',
@@ -122,7 +123,7 @@ export const QuickAddExpenseModal = () => {
                 onChange={e => { setAmount(e.target.value); setError(''); }}
                 placeholder="0.00"
                 className="form-input"
-                style={{ paddingLeft: 28, fontSize: '1.125rem', fontWeight: 700, letterSpacing: '-0.02em' }}
+                style={{ paddingLeft: 28, fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 700, letterSpacing: '-0.02em' }}
                 autoFocus
                 required
               />
@@ -149,7 +150,7 @@ export const QuickAddExpenseModal = () => {
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 6,
+              gap: 8,
             }}>
               {CATEGORIES.map(cat => (
                 <button
@@ -160,7 +161,7 @@ export const QuickAddExpenseModal = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
-                    padding: '7px 8px',
+                    padding: '8px',
                     borderRadius: 'var(--radius-md)',
                     border: `1px solid ${category === cat.id ? 'var(--accent)' : 'var(--border-base)'}`,
                     background: category === cat.id ? 'var(--accent-muted)' : 'var(--bg-tertiary)',
@@ -192,7 +193,7 @@ export const QuickAddExpenseModal = () => {
                 onChange={e => setDate(e.target.value)}
                 className="form-input"
                 required
-                style={{ fontSize: '0.8125rem' }}
+                style={{ fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}
               />
             </div>
             <div className="form-group">

@@ -23,15 +23,16 @@ export const Navbar = () => {
           onClick={() => setActivePage('dashboard')}
         >
           <div style={{
-            width: 30, height: 30,
+            width: 32, height: 32,
             borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, #10b981, #059669)',
+            background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <GraduationCap size={16} color="#fff" strokeWidth={2.2} />
+            <GraduationCap size={18} color="#0F172A" strokeWidth={2} />
           </div>
           <span style={{
+            fontFamily: 'var(--font-heading)',
             fontSize: '0.9375rem',
             fontWeight: 700,
             color: 'var(--text-primary)',
@@ -44,6 +45,7 @@ export const Navbar = () => {
         {/* Desktop greeting */}
         <div className="hidden md:block" style={{ minWidth: 0 }}>
           <h1 style={{
+            fontFamily: 'var(--font-heading)',
             fontSize: '0.9375rem',
             fontWeight: 700,
             color: 'var(--text-primary)',
@@ -68,7 +70,7 @@ export const Navbar = () => {
       </div>
 
       {/* Right controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
         {/* Search trigger */}
         <button
           onClick={() => setIsGlobalSearchOpen(true)}
@@ -76,7 +78,7 @@ export const Navbar = () => {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            height: 34,
+            height: 36,
             padding: '0 12px',
             borderRadius: 'var(--radius-md)',
             background: 'var(--bg-tertiary)',
@@ -90,7 +92,7 @@ export const Navbar = () => {
             maxWidth: 240,
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
+            e.currentTarget.style.borderColor = 'var(--border-accent)';
             e.currentTarget.style.color = 'var(--text-secondary)';
           }}
           onMouseLeave={e => {
@@ -99,7 +101,7 @@ export const Navbar = () => {
           }}
           title="Search (Ctrl+K)"
         >
-          <Search size={13} strokeWidth={2} style={{ flexShrink: 0 }} />
+          <Search size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
           <span style={{ display: 'none' }} className="sm:inline">Search...</span>
           <kbd style={{
             display: 'none',
@@ -111,7 +113,7 @@ export const Navbar = () => {
             fontWeight: 500,
             lineHeight: 1.4,
             color: 'var(--text-muted)',
-            fontFamily: 'inherit',
+            fontFamily: 'var(--font-mono)',
           }} className="lg:inline-block">
             ⌘K
           </kbd>
@@ -125,8 +127,8 @@ export const Navbar = () => {
           aria-label="Toggle theme"
         >
           {profile?.theme === 'dark'
-            ? <Sun size={15} color="#f59e0b" strokeWidth={2} />
-            : <Moon size={15} color="var(--accent)" strokeWidth={2} />
+            ? <Sun size={16} color="#E8A33D" strokeWidth={2} />
+            : <Moon size={16} color="var(--accent)" strokeWidth={2} />
           }
         </button>
 
@@ -137,9 +139,11 @@ export const Navbar = () => {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            padding: 2,
+            padding: 0,
             borderRadius: 'var(--radius-full)',
             transition: 'opacity 0.15s',
+            display: 'flex',
+            alignItems: 'center',
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}

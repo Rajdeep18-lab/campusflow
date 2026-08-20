@@ -15,9 +15,9 @@ import { EmptyState } from '../components/EmptyState';
 
 /* ── Category Config ── */
 const CAT_COLORS = {
-  Food: '#10b981', Travel: '#06b6d4', Books: '#3b82f6',
-  Hostel: '#8b5cf6', Mess: '#ec4899', Shopping: '#f59e0b',
-  Recharge: '#14b8a6', Entertainment: '#6366f1', Others: '#64748b',
+  Food: '#F0A24B', Travel: '#6FB6E8', Books: '#8A7FE8',
+  Hostel: '#E8875B', Mess: '#4FBF8B', Shopping: '#E86FA8',
+  Recharge: '#5BCFE0', Entertainment: '#C98AE8', Others: '#9AA5B8',
 };
 const CAT_EMOJIS = {
   Food: '🍲', Travel: '🚌', Books: '📚', Hostel: '🏠',
@@ -309,7 +309,7 @@ export const AnalyticsView = () => {
 
       {/* Page Header */}
       <div>
-        <h1 style={{ fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
           Analytics &amp; Insights
         </h1>
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
@@ -326,48 +326,48 @@ export const AnalyticsView = () => {
       ) : (
         <>
           {/* ── Overview Cards ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
             {[
               {
                 label: 'Monthly Expense',
                 value: `₹${monthlyExpensesTotal.toLocaleString('en-IN')}`,
                 sub: `${expenses.filter(e => e.date?.startsWith(monthStr)).length} transactions`,
-                icon: TrendingUp, iconBg: 'rgba(16,185,129,0.1)', iconColor: 'var(--color-success)',
+                icon: TrendingUp, iconBg: 'rgba(52,199,123,0.12)', iconColor: 'var(--color-success)',
                 delay: 0,
               },
               {
                 label: 'Avg Daily Spend',
                 value: `₹${avgDaily.toLocaleString('en-IN')}`,
                 sub: `Over ${dayOfMonth} days`,
-                icon: CalendarDays, iconBg: 'rgba(59,130,246,0.1)', iconColor: '#3b82f6',
+                icon: CalendarDays, iconBg: 'rgba(108,142,245,0.12)', iconColor: 'var(--accent-blue)',
                 delay: 0.05,
               },
               {
                 label: 'Top Category',
                 value: sortedCats[0]?.[0] || '—',
                 sub: sortedCats[0] ? `${Math.round((sortedCats[0][1] / totalSum) * 100)}% of spending` : 'No data',
-                icon: Flame, iconBg: 'rgba(239,68,68,0.1)', iconColor: 'var(--color-danger)',
+                icon: Flame, iconBg: 'rgba(229,72,77,0.12)', iconColor: 'var(--color-danger)',
                 delay: 0.10,
               },
               {
                 label: 'Budget Left',
                 value: monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Not set',
                 sub: monthlyBudget > 0 ? `${100 - budgetUsagePercent}% remaining` : 'Set a budget',
-                icon: Wallet, iconBg: 'rgba(139,92,246,0.1)', iconColor: '#8b5cf6',
+                icon: Wallet, iconBg: 'rgba(232,163,61,0.12)', iconColor: 'var(--accent)',
                 delay: 0.15,
               },
               {
                 label: 'Savings Est.',
                 value: monthlyBudget > 0 ? `₹${savings.toLocaleString('en-IN')}` : '—',
                 sub: monthlyBudget > 0 ? 'vs monthly budget' : 'Set a budget first',
-                icon: PiggyBank, iconBg: 'rgba(20,184,166,0.1)', iconColor: '#14b8a6',
+                icon: PiggyBank, iconBg: 'rgba(91,207,224,0.12)', iconColor: '#5BCFE0',
                 delay: 0.20,
               },
               {
                 label: 'Task Progress',
                 value: `${taskCompletionPercent}%`,
                 sub: `${completedTasksCount} done / ${pendingTasksCount} pending`,
-                icon: CheckSquare, iconBg: 'rgba(99,102,241,0.1)', iconColor: '#6366f1',
+                icon: CheckSquare, iconBg: 'rgba(138,127,232,0.12)', iconColor: '#8A7FE8',
                 delay: 0.25,
               },
             ].map(({ label, value, sub, icon: Icon, iconBg, iconColor, delay }) => (
@@ -382,7 +382,7 @@ export const AnalyticsView = () => {
                     <Icon size={16} color={iconColor} strokeWidth={2} />
                   </div>
                 </div>
-                <div className="stat-value">{value}</div>
+                <div className="stat-value" style={{ fontFamily: label !== 'Top Category' ? 'var(--font-mono)' : 'var(--font-heading)' }}>{value}</div>
                 <div className="stat-sub">{sub}</div>
               </div>
             ))}
