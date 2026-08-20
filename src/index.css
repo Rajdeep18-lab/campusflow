@@ -406,10 +406,11 @@ h1, h2, h3, h4, h5, h6, .text-heading {
 }
 
 .nav-item.active {
-  background-color: var(--bg-active);
+  background: linear-gradient(90deg, rgba(232, 163, 61, 0.15) 0%, rgba(232, 163, 61, 0.03) 100%);
   color: var(--accent);
   font-weight: 600;
-  border-color: var(--accent-border);
+  border-color: rgba(232, 163, 61, 0.25);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .nav-item .nav-icon {
@@ -482,6 +483,31 @@ h1, h2, h3, h4, h5, h6, .text-heading {
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--border-base);
+}
+
+/* Hero Banner Snapshot */
+.today-snapshot {
+  position: relative;
+  background: linear-gradient(135deg, rgba(232, 163, 61, 0.08) 0%, rgba(15, 23, 42, 0.85) 50%, rgba(19, 31, 53, 0.95) 100%);
+  border: 1px solid rgba(232, 163, 61, 0.22);
+  border-radius: var(--radius-2xl);
+  padding: 24px 28px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.today-snapshot::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 163, 61, 0.18) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 /* Stat Card */

@@ -4,6 +4,10 @@ import {
   CheckSquare,
   Plus,
   Trash2,
+  TrendingUp,
+  PiggyBank,
+  Target,
+  Clock,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { EmptyState } from '../components/EmptyState';
@@ -125,14 +129,13 @@ export const DashboardView = () => {
     return true;
   });
 
+  const formattedDateStr = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
 
       {/* ═══════════════════════════════════════════════
-          TODAY SNAPSHOT & GREETING HEADER
-         ═══════════════════════════════════════════════ */}
-      {/* ═══════════════════════════════════════════════
-          TODAY SNAPSHOT & GREETING HEADER
+          TODAY SNAPSHOT & GREETING HERO BANNER
          ═══════════════════════════════════════════════ */}
       <div className="today-snapshot">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
@@ -143,7 +146,7 @@ export const DashboardView = () => {
               </h1>
             </div>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-              Here is your daily snapshot for <span style={{ fontFamily: 'var(--font-mono)' }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' })}</span>.
+              Here is your daily snapshot for <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-secondary)' }}>{formattedDateStr}</span>.
             </p>
           </div>
 
@@ -163,59 +166,84 @@ export const DashboardView = () => {
         {/* 4 Key Snapshot Metric Chips */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 12,
           marginTop: 20,
         }}>
           {/* Today's Expense */}
           <div style={{
-            background: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-card)', padding: '14px 16px', borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
           }}>
-            <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Today's Spend
+            <div>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Today's Spend
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em', marginTop: 2 }}>
+                ₹{todayExpensesTotal.toLocaleString('en-IN')}
+              </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em', marginTop: 2 }}>
-              ₹{todayExpensesTotal.toLocaleString('en-IN')}
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(52,199,123,0.12)', border: '1px solid rgba(52,199,123,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <TrendingUp size={18} color="var(--color-success)" />
             </div>
           </div>
 
           {/* Today's Tasks */}
           <div style={{
-            background: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-card)', padding: '14px 16px', borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
           }}>
-            <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Today's Tasks
+            <div>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Today's Tasks
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-blue)', letterSpacing: '-0.02em', marginTop: 2 }}>
+                {todayTasks.filter(t => !t.completed).length} <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pending</span>
+              </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--accent-blue)', letterSpacing: '-0.02em', marginTop: 2 }}>
-              {todayTasks.filter(t => !t.completed).length} pending
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(108,142,245,0.12)', border: '1px solid rgba(108,142,245,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Clock size={18} color="var(--accent-blue)" />
             </div>
           </div>
 
           {/* Remaining Budget */}
           <div style={{
-            background: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-card)', padding: '14px 16px', borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            transition: 'all 0.15s',
           }} onClick={() => setIsBudgetModalOpen(true)}>
-            <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Budget Left
+            <div>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Budget Left
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: isOverBudget ? 'var(--color-danger)' : 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: 2 }}>
+                {monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Set Budget'}
+              </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color: isOverBudget ? 'var(--color-danger)' : 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: 2 }}>
-              {monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Set Budget'}
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(232,163,61,0.12)', border: '1px solid rgba(232,163,61,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <PiggyBank size={18} color="var(--accent)" />
             </div>
           </div>
 
-          {/* Monthly Progress */}
+          {/* Task Progress */}
           <div style={{
-            background: 'var(--bg-card)', padding: '12px 16px', borderRadius: 'var(--radius-md)',
+            background: 'var(--bg-card)', padding: '14px 16px', borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
           }}>
-            <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Task Completion
+            <div>
+              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Task Progress
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.02em', marginTop: 2 }}>
+                {taskCompletionPercent}% <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>done</span>
+              </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.02em', marginTop: 2 }}>
-              {taskCompletionPercent}% done
+            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(138,127,232,0.12)', border: '1px solid rgba(138,127,232,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Target size={18} color="#8A7FE8" />
             </div>
           </div>
         </div>

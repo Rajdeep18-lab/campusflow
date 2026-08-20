@@ -5,16 +5,25 @@ import { UserAvatar } from './UserAvatar';
 
 export const Navbar = () => {
   const {
-    getGreeting,
+    activePage,
     profile,
     toggleTheme,
     setIsGlobalSearchOpen,
     setActivePage,
   } = useApp();
 
+  const pageTitles = {
+    dashboard: 'Dashboard',
+    expenses: 'Expense Manager',
+    todos: 'Task Manager',
+    analytics: 'Analytics & Insights',
+    calendar: 'Calendar View',
+    settings: 'Settings',
+  };
+
   return (
     <header className="app-navbar">
-      {/* Left: Mobile brand | Desktop greeting */}
+      {/* Left: Mobile brand | Desktop active page breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
         {/* Mobile logo */}
         <div
@@ -42,8 +51,18 @@ export const Navbar = () => {
           </span>
         </div>
 
-        {/* Desktop greeting */}
-        <div className="hidden md:block" style={{ minWidth: 0 }}>
+        {/* Desktop breadcrumb */}
+        <div className="hidden md:flex" style={{ alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <span style={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+          }}>
+            CampusFlow
+          </span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>/</span>
           <h1 style={{
             fontFamily: 'var(--font-heading)',
             fontSize: '0.9375rem',
@@ -52,20 +71,9 @@ export const Navbar = () => {
             letterSpacing: '-0.02em',
             lineHeight: 1.2,
             whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
           }}>
-            {getGreeting()}
+            {pageTitles[activePage] || 'Dashboard'}
           </h1>
-          <p style={{
-            fontSize: '0.6875rem',
-            color: 'var(--text-muted)',
-            fontWeight: 500,
-            marginTop: 2,
-            whiteSpace: 'nowrap',
-          }}>
-            Student Expense &amp; Task Control Center
-          </p>
         </div>
       </div>
 

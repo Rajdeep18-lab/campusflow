@@ -95,13 +95,20 @@ export const Sidebar = ({ closeMobileSidebar }) => {
       <div className="sidebar-footer">
         <div className="sidebar-promo-card">
           <div style={{
-            width: 32, height: 32,
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--accent-muted)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 8px',
+            fontSize: '0.625rem',
+            fontWeight: 700,
+            color: 'var(--color-success)',
+            background: 'rgba(52,199,123,0.12)',
+            padding: '3px 8px',
+            borderRadius: 20,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            marginBottom: 8,
+            border: '1px solid rgba(52,199,123,0.25)',
           }}>
-            <Sparkles size={16} color="var(--accent)" strokeWidth={2} />
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-success)' }} />
+            100% Offline Hub
           </div>
           <div style={{
             fontFamily: 'var(--font-heading)',
@@ -110,35 +117,16 @@ export const Sidebar = ({ closeMobileSidebar }) => {
             color: 'var(--text-primary)',
             marginBottom: 4,
           }}>
-            Stay Productive
+            CampusFlow Pro
           </div>
           <div style={{
             fontSize: '0.6875rem',
             color: 'var(--text-muted)',
-            lineHeight: 1.5,
-            marginBottom: 12,
+            lineHeight: 1.4,
+            marginBottom: 10,
           }}>
-            Track. Manage. Achieve.
+            Private local storage
           </div>
-          <button
-            onClick={() => handleNav('dashboard')}
-            style={{
-              width: '100%',
-              padding: '6px 0',
-              borderRadius: 'var(--radius-sm)',
-              background: 'var(--accent)',
-              color: '#0F172A',
-              fontSize: '0.6875rem',
-              fontWeight: 700,
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            Go to Dashboard
-          </button>
         </div>
       </div>
     </aside>
