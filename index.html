@@ -6,12 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#020617" />
     <title>CampusFlow - Student Expense Tracker & Daily Task Manager</title>
-    <meta name="description" content="CampusFlow is a minimal, modern student productivity SaaS application combining daily expense tracking and task management in one place." />
+    <meta name="description" content="CampusFlow is a minimal, modern student productivity application combining daily expense tracking and task management in one place." />
+    
+    <!-- Open Graph / Social Cards -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CampusFlow" />
+    <meta property="og:title" content="CampusFlow - College Expense Tracker & Task Manager" />
+    <meta property="og:description" content="Track your college spending, set monthly budgets, and organize assignments effortlessly." />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CampusFlow - College Expense Tracker & Task Manager" />
+    <meta name="twitter:description" content="Track your college spending, set monthly budgets, and organize assignments effortlessly." />
+
+    <!-- Mobile PWA & Apple Web App -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CampusFlow" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Google Fonts Preload & Import -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
   </head>
   <body>
+    <noscript>
+      <div style="padding: 2rem; text-align: center; color: #F1F5F9; background: #020617; font-family: sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">JavaScript Required</h2>
+        <p style="color: #8291AC; max-width: 400px; line-height: 1.5;">Please enable JavaScript in your browser settings to run CampusFlow.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

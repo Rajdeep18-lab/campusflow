@@ -1,0 +1,16 @@
+{
+  "short_name": "CampusFlow",
+  "name": "CampusFlow - Student Expense Tracker & Task Manager",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "display": "standalone",
+  "orientation": "portrait"
+}
