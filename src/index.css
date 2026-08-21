@@ -1159,7 +1159,7 @@ h1, h2, h3, h4, h5, h6, .text-heading {
   }
 
   .fab-button {
-    bottom: 72px;
+    bottom: 76px;
     right: 16px;
     width: 48px;
     height: 48px;
@@ -1181,6 +1181,22 @@ h1, h2, h3, h4, h5, h6, .text-heading {
 
   .modal-card {
     border-radius: var(--radius-lg);
+  }
+}
+
+/* ============================================================
+   CALENDAR LAYOUT — RESPONSIVE GRID
+   ============================================================ */
+.cal-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+@media (max-width: 900px) {
+  .cal-layout-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  GraduationCap,
   LayoutDashboard,
   CreditCard,
   CheckSquare,
@@ -37,7 +36,10 @@ export const Sidebar = ({ closeMobileSidebar }) => {
       {/* Logo / Brand */}
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, #E8A33D, #d9922c)' }}>
-          <GraduationCap size={18} color="#0F172A" strokeWidth={2} />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4 12h7" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{

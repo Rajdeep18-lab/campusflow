@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Sun, Moon, GraduationCap } from 'lucide-react';
+import { Search, Sun, Moon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { UserAvatar } from './UserAvatar';
 
@@ -38,7 +38,10 @@ export const Navbar = () => {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <GraduationCap size={18} color="#0F172A" strokeWidth={2} />
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 12h7" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
           </div>
           <span style={{
             fontFamily: 'var(--font-heading)',

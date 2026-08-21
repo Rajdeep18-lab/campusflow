@@ -137,7 +137,7 @@ export const CalendarView = () => {
       </div>
 
       {/* ── Main Layout: Calendar Grid + Selected Day Pane ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, alignItems: 'flex-start' }} className="cal-layout-grid">
+      <div className="cal-layout-grid">
         {/* ── Left Column: Calendar ── */}
         <div className="card" style={{ padding: 14 }}>
           {/* Controls Header */}
@@ -462,13 +462,7 @@ export const CalendarView = () => {
         </div>
       </div>
 
-      <style>{`
-        @media (max-width: 900px) {
-          .calendar-layout {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+
     </div>
   );
 };
