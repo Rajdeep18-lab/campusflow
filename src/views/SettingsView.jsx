@@ -11,6 +11,9 @@ import {
   Camera,
   Trash2,
   AlertTriangle,
+  Bell,
+  BellOff,
+  BellRing,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { UserAvatar } from '../components/UserAvatar';
@@ -21,13 +24,10 @@ const SettingsSection = ({ title, subtitle, icon: Icon, iconColor = 'var(--accen
     <div className="card-header">
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{
-          width: 34,
-          height: 34,
+          width: 34, height: 34,
           borderRadius: 'var(--radius-md)',
           background: 'var(--accent-muted)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
         }}>
           <Icon size={16} color={iconColor} strokeWidth={2} />
@@ -35,10 +35,8 @@ const SettingsSection = ({ title, subtitle, icon: Icon, iconColor = 'var(--accen
         <div>
           <div style={{
             fontFamily: 'var(--font-heading)',
-            fontSize: '0.9375rem',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em',
+            fontSize: '0.9375rem', fontWeight: 700,
+            color: 'var(--text-primary)', letterSpacing: '-0.02em',
           }}>
             {title}
           </div>
@@ -67,6 +65,8 @@ export const SettingsView = () => {
     exportDataAsJSON,
     importDataFromJSON,
     resetAllDataToDefaults,
+    notifPermission,
+    requestNotifications,
   } = useApp();
 
   const [nameInput,          setNameInput]          = useState(profile?.name || '');
@@ -117,7 +117,6 @@ export const SettingsView = () => {
     setLastExportTime(new Date());
   };
 
-  // Approximate JSON size
   const approxSize = () => {
     const data = { profile, expenses, todos, monthlyBudget };
     const bytes = new Blob([JSON.stringify(data)]).size;
@@ -125,10 +124,8 @@ export const SettingsView = () => {
   };
 
   return (
-    <div
-      className="animate-fade-in"
-      style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}
-    >
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}>
+
       {/* Page Header */}
       <div>
         <h1 style={{
@@ -139,105 +136,61 @@ export const SettingsView = () => {
           Settings
         </h1>
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-          Manage your profile, theme, and local data preferences.
+          Manage your profile, notifications, theme, and local data preferences.
         </p>
       </div>
 
       {/* ── Profile ── */}
-      <SettingsSection
-        title="Personal Profile"
-        subtitle="Update your name and avatar"
-        icon={User}
-      >
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          alignItems: 'flex-start',
-          gap: 24,
-        }}>
+      <SettingsSection title="Personal Profile" subtitle="Update your name and avatar" icon={User}>
+        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 24 }}>
           {/* Avatar */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
             <div
               style={{ position: 'relative' }}
-              onMouseEnter={e => {
-                const overlay = e.currentTarget.querySelector('.avatar-overlay');
-                if (overlay) overlay.style.opacity = 1;
-              }}
-              onMouseLeave={e => {
-                const overlay = e.currentTarget.querySelector('.avatar-overlay');
-                if (overlay) overlay.style.opacity = 0;
-              }}
+              onMouseEnter={e => { const o = e.currentTarget.querySelector('.avatar-overlay'); if (o) o.style.opacity = 1; }}
+              onMouseLeave={e => { const o = e.currentTarget.querySelector('.avatar-overlay'); if (o) o.style.opacity = 0; }}
             >
               <UserAvatar size="xl" />
               <div
                 className="avatar-overlay"
                 onClick={() => imageInputRef.current?.click()}
                 style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.55)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: 0,
-                  transition: 'opacity 0.2s',
-                  cursor: 'pointer',
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  background: 'rgba(0,0,0,0.55)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  opacity: 0, transition: 'opacity 0.2s', cursor: 'pointer',
                 }}
               >
                 <Camera size={20} color="#fff" />
               </div>
             </div>
-            <input
-              type="file"
-              ref={imageInputRef}
-              onChange={handleImageUpload}
-              accept="image/*"
-              style={{ display: 'none' }}
-            />
+            <input type="file" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" style={{ display: 'none' }} />
             {profile?.avatarUrl && (
               <button
                 onClick={() => updateProfile({ avatarUrl: null })}
                 style={{
-                  fontSize: '0.6875rem',
-                  color: 'var(--color-danger)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
+                  fontSize: '0.6875rem', color: 'var(--color-danger)',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4,
                 }}
               >
-                <Trash2 size={11} />
-                Remove photo
+                <Trash2 size={11} /> Remove photo
               </button>
             )}
           </div>
 
           {/* Name form */}
-          <form
-            onSubmit={handleNameSave}
-            style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 12 }}
-          >
+          <form onSubmit={handleNameSave} style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="form-group">
               <label className="form-label">Display Name</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input
-                  type="text"
-                  value={nameInput}
-                  onChange={e => setNameInput(e.target.value)}
-                  placeholder="Your name..."
-                  className="form-input"
-                  maxLength={40}
-                  required
+                  type="text" value={nameInput} onChange={e => setNameInput(e.target.value)}
+                  placeholder="Your name..." className="form-input" maxLength={40} required
                   style={{ flex: 1, fontSize: '0.875rem' }}
                 />
                 <button type="submit" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
-                  <Check size={13} />
-                  Save
+                  <Check size={13} /> Save
                 </button>
               </div>
               <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
@@ -248,6 +201,117 @@ export const SettingsView = () => {
         </div>
       </SettingsSection>
 
+      {/* ── Notifications ── */}
+      <SettingsSection
+        title="Task Notifications"
+        subtitle="Get browser reminders for overdue & due-today tasks"
+        icon={notifPermission === 'granted' ? BellRing : Bell}
+        iconColor="#f59e0b"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Status row */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+            padding: '14px 16px', borderRadius: 12,
+            background: notifPermission === 'granted'
+              ? 'rgba(5,150,105,0.08)' : notifPermission === 'denied'
+              ? 'rgba(220,38,38,0.08)' : 'rgba(245,158,11,0.08)',
+            border: `1px solid ${
+              notifPermission === 'granted' ? 'rgba(5,150,105,0.25)'
+              : notifPermission === 'denied' ? 'rgba(220,38,38,0.25)'
+              : 'rgba(245,158,11,0.25)'
+            }`,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {notifPermission === 'granted'
+                ? <BellRing size={18} color="#059669" strokeWidth={2} />
+                : notifPermission === 'denied'
+                ? <BellOff size={18} color="#dc2626" strokeWidth={2} />
+                : <Bell size={18} color="#f59e0b" strokeWidth={2} />
+              }
+              <div>
+                <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {notifPermission === 'granted' ? 'Notifications Enabled'
+                    : notifPermission === 'denied' ? 'Notifications Blocked'
+                    : notifPermission === 'unsupported' ? 'Not Supported'
+                    : 'Notifications Off'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  {notifPermission === 'granted'
+                    ? "You'll receive task reminders automatically every 30 min"
+                    : notifPermission === 'denied'
+                    ? 'Go to browser Site Settings → Notifications → Allow CampusFlow'
+                    : notifPermission === 'unsupported'
+                    ? "Your browser doesn't support push notifications"
+                    : 'Tap "Enable" to start getting task deadline reminders'}
+                </div>
+              </div>
+            </div>
+
+            {/* Action button */}
+            {notifPermission !== 'unsupported' && notifPermission !== 'denied' && (
+              <button
+                onClick={requestNotifications}
+                disabled={notifPermission === 'granted'}
+                style={{
+                  height: 36, padding: '0 16px', borderRadius: 10, border: 'none',
+                  cursor: notifPermission === 'granted' ? 'default' : 'pointer',
+                  background: notifPermission === 'granted'
+                    ? 'rgba(5,150,105,0.15)'
+                    : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                  color: notifPermission === 'granted' ? '#059669' : '#fff',
+                  fontWeight: 700, fontSize: '0.8125rem', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {notifPermission === 'granted'
+                  ? <><Check size={13} strokeWidth={2.5} /> Enabled</>
+                  : <><Bell size={13} strokeWidth={2.5} /> Enable</>}
+              </button>
+            )}
+
+            {notifPermission === 'denied' && (
+              <span style={{
+                fontSize: '0.75rem', color: '#dc2626', fontWeight: 600,
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}>
+                <BellOff size={13} /> Blocked in browser
+              </span>
+            )}
+          </div>
+
+          {/* What you'll get */}
+          {notifPermission !== 'unsupported' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                What you'll receive
+              </div>
+              {[
+                { emoji: '🔴', title: 'Overdue Alerts', desc: 'Fired when you have tasks past their due date' },
+                { emoji: '⏰', title: 'Due Today Reminders', desc: 'Each incomplete task due today gets a nudge' },
+                { emoji: '🔄', title: 'Auto Check', desc: 'Checks every 30 minutes while the app is open' },
+                { emoji: '🛑', title: 'No Spam', desc: "Same task won't re-notify for 6 hours" },
+              ].map(({ emoji, title, desc }) => (
+                <div key={title} style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 10,
+                  padding: '10px 14px', borderRadius: 10,
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-subtle)',
+                }}>
+                  <span style={{ fontSize: '1.125rem', flexShrink: 0, lineHeight: 1.3 }}>{emoji}</span>
+                  <div>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{title}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </SettingsSection>
+
       {/* ── Appearance ── */}
       <SettingsSection
         title="Appearance"
@@ -255,22 +319,9 @@ export const SettingsView = () => {
         icon={profile?.theme === 'dark' ? Moon : Sun}
         iconColor={profile?.theme === 'dark' ? 'var(--accent)' : '#f59e0b'}
       >
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 12,
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
-              color: 'var(--text-primary)',
-              marginBottom: 4,
-            }}>
-              Color Theme
-            </div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Color Theme</div>
             <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
               Currently: <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{profile?.theme || 'dark'}</span> mode
             </div>
@@ -284,9 +335,8 @@ export const SettingsView = () => {
         </div>
       </SettingsSection>
 
-      {/* ── Data Portability (Premium) ── */}
+      {/* ── Data Portability ── */}
       <div className="card" style={{ overflow: 'hidden' }}>
-        {/* Header */}
         <div className="card-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
@@ -308,7 +358,6 @@ export const SettingsView = () => {
         </div>
 
         <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
           {/* Stats row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
             {[
@@ -320,12 +369,8 @@ export const SettingsView = () => {
                 background: bg, border: `1px solid ${border}`,
                 borderRadius: 'var(--radius-md)', padding: '12px 14px', textAlign: 'center',
               }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color, letterSpacing: '-0.02em' }}>
-                  {value}
-                </div>
-                <div style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>
-                  {label}
-                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color, letterSpacing: '-0.02em' }}>{value}</div>
+                <div style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{label}</div>
               </div>
             ))}
           </div>
@@ -336,24 +381,19 @@ export const SettingsView = () => {
             border: '1px solid rgba(232,163,61,0.25)',
             borderRadius: 'var(--radius-lg)',
             padding: '16px 18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-            flexWrap: 'wrap',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 16, flexWrap: 'wrap',
           }}>
             <div>
               <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Download size={15} color="#E8A33D" />
-                Export JSON Backup
+                <Download size={15} color="#E8A33D" /> Export JSON Backup
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                Downloads all expenses, tasks, budget &amp; profile as a single <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-tertiary)', padding: '1px 5px', borderRadius: 4, fontSize: '0.7rem' }}>.json</code> file.
+                Downloads all data as a <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-tertiary)', padding: '1px 5px', borderRadius: 4, fontSize: '0.7rem' }}>.json</code> file.
               </div>
               {lastExportTime && (
                 <div style={{ fontSize: '0.6875rem', color: 'var(--color-success)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}>
-                  <Check size={11} />
-                  Last exported at {lastExportTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  <Check size={11} /> Last exported at {lastExportTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                 </div>
               )}
             </div>
@@ -361,58 +401,37 @@ export const SettingsView = () => {
               onClick={handleExport}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 20px',
-                borderRadius: 'var(--radius-md)',
+                padding: '10px 20px', borderRadius: 'var(--radius-md)',
                 background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
-                color: '#0F172A',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: 700,
+                color: '#0F172A', border: 'none', cursor: 'pointer',
+                fontSize: '0.875rem', fontWeight: 700,
                 boxShadow: '0 4px 14px rgba(232,163,61,0.35)',
-                transition: 'all 0.15s',
                 flexShrink: 0,
-                letterSpacing: '-0.01em',
               }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(232,163,61,0.5)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(232,163,61,0.35)'; }}
             >
-              <Download size={15} strokeWidth={2.5} />
-              Download Backup
+              <Download size={15} strokeWidth={2.5} /> Download Backup
             </button>
           </div>
 
-          {/* Import card — drag & drop */}
+          {/* Import card */}
           <div
             onDragOver={e => { e.preventDefault(); setIsDragOver(true); }}
             onDragLeave={() => setIsDragOver(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
             style={{
-              background: isDragOver
-                ? 'rgba(108,142,245,0.12)'
-                : 'rgba(108,142,245,0.05)',
+              background: isDragOver ? 'rgba(108,142,245,0.12)' : 'rgba(108,142,245,0.05)',
               border: `2px dashed ${isDragOver ? 'rgba(108,142,245,0.7)' : 'rgba(108,142,245,0.3)'}`,
-              borderRadius: 'var(--radius-lg)',
-              padding: '22px 18px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              textAlign: 'center',
+              borderRadius: 'var(--radius-lg)', padding: '22px 18px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 8, cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center',
             }}
           >
             <div style={{
               width: 44, height: 44, borderRadius: '50%',
-              background: 'rgba(108,142,245,0.12)',
-              border: '1px solid rgba(108,142,245,0.25)',
+              background: 'rgba(108,142,245,0.12)', border: '1px solid rgba(108,142,245,0.25)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 4,
-              transition: 'transform 0.2s',
-              transform: isDragOver ? 'scale(1.15)' : 'scale(1)',
+              marginBottom: 4, transform: isDragOver ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.2s',
             }}>
               <Upload size={20} color="#6C8EF5" strokeWidth={2} />
             </div>
@@ -420,28 +439,19 @@ export const SettingsView = () => {
               {isDragOver ? 'Drop your backup file here!' : 'Drag & drop to import'}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              or <span style={{ color: '#6C8EF5', fontWeight: 600 }}>click to browse</span> for a <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-tertiary)', padding: '1px 5px', borderRadius: 4, fontSize: '0.7rem' }}>CampusFlow_Backup_*.json</code> file
+              or <span style={{ color: '#6C8EF5', fontWeight: 600 }}>click to browse</span> for a backup <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-tertiary)', padding: '1px 5px', borderRadius: 4, fontSize: '0.7rem' }}>.json</code> file
             </div>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2, fontWeight: 500 }}>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>
               ⚠️ This will overwrite your current local data
             </div>
           </div>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleJSONFileChange}
-            accept=".json,application/json"
-            style={{ display: 'none' }}
-          />
+          <input type="file" ref={fileInputRef} onChange={handleJSONFileChange} accept=".json,application/json" style={{ display: 'none' }} />
 
           {/* Info strip */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: 8,
-            padding: '10px 14px',
-            background: 'var(--bg-tertiary)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
+            padding: '10px 14px', background: 'var(--bg-tertiary)',
+            borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)',
           }}>
             <ShieldCheck size={13} color="var(--color-success)" />
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
@@ -454,15 +464,11 @@ export const SettingsView = () => {
       {/* ── Danger Zone ── */}
       <div className="card" style={{ border: '1px solid rgba(239,68,68,0.2)' }}>
         <div style={{
-          padding: '16px 20px',
-          borderBottom: '1px solid rgba(239,68,68,0.12)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
+          padding: '16px 20px', borderBottom: '1px solid rgba(239,68,68,0.12)',
+          display: 'flex', alignItems: 'center', gap: 10,
         }}>
           <div style={{
-            width: 34, height: 34,
-            borderRadius: 'var(--radius-md)',
+            width: 34, height: 34, borderRadius: 'var(--radius-md)',
             background: 'var(--color-danger-bg)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
@@ -473,28 +479,15 @@ export const SettingsView = () => {
           </div>
         </div>
         <div className="card-body">
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 16,
-            flexWrap: 'wrap',
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
-                Reset All Local Data
-              </div>
+              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Reset All Local Data</div>
               <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                 Permanently deletes all expenses, tasks, budget, and profile settings.
               </div>
             </div>
-            <button
-              onClick={() => setIsResetConfirmOpen(true)}
-              className="btn btn-danger btn-sm"
-              style={{ flexShrink: 0 }}
-            >
-              <RotateCcw size={12} />
-              Reset All Data
+            <button onClick={() => setIsResetConfirmOpen(true)} className="btn btn-danger btn-sm" style={{ flexShrink: 0 }}>
+              <RotateCcw size={12} /> Reset All Data
             </button>
           </div>
         </div>
@@ -502,33 +495,22 @@ export const SettingsView = () => {
 
       {/* ── About ── */}
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        padding: '20px 0',
-        borderTop: '1px solid var(--border-base)',
-        fontSize: '0.75rem',
-        color: 'var(--text-muted)',
-        fontWeight: 500,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        padding: '20px 0', borderTop: '1px solid var(--border-base)',
+        fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500,
       }}>
         <ShieldCheck size={14} color="var(--accent)" />
-        <span>CampusFlow v1.0.0 · 100% Offline · Local Storage</span>
+        <span>CampusFlow v1.1.0 · PWA · 100% Offline · Local Storage</span>
       </div>
 
-      {/* ── Reset Confirmation Modal ── */}
+      {/* ── Reset Confirm Modal ── */}
       {isResetConfirmOpen && (
         <div className="modal-overlay" onClick={() => setIsResetConfirmOpen(false)}>
           <div className="modal-card max-w-md" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <AlertTriangle size={20} color="var(--color-danger)" />
-                <h3 style={{
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  color: 'var(--color-danger)',
-                  letterSpacing: '-0.02em',
-                }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-danger)', letterSpacing: '-0.02em' }}>
                   Are you absolutely sure?
                 </h3>
               </div>
@@ -540,14 +522,9 @@ export const SettingsView = () => {
               </p>
             </div>
             <div className="modal-footer">
-              <button onClick={() => setIsResetConfirmOpen(false)} className="btn btn-secondary btn-sm">
-                Cancel
-              </button>
+              <button onClick={() => setIsResetConfirmOpen(false)} className="btn btn-secondary btn-sm">Cancel</button>
               <button
-                onClick={() => {
-                  resetAllDataToDefaults();
-                  setIsResetConfirmOpen(false);
-                }}
+                onClick={() => { resetAllDataToDefaults(); setIsResetConfirmOpen(false); }}
                 className="btn btn-danger btn-sm"
               >
                 Yes, Reset Everything

@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import {
+  getNotifPermission,
+  requestNotifPermission,
+  checkAndNotify,
+  startNotifScheduler,
+  stopNotifScheduler,
+} from '../services/NotificationService';
+
 
 const AppContext = createContext();
 
@@ -55,6 +63,9 @@ export const AppProvider = ({ children }) => {
   const [activePage, setActivePage] = useState('dashboard');
   const [toastMessage, setToastMessage] = useState(null);
 
+  // Notification permission state
+  const [notifPermission, setNotifPermission] = useState(() => getNotifPermission());
+
   // Modal States
   const [isQuickAddExpenseOpen, setIsQuickAddExpenseOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
@@ -103,6 +114,45 @@ export const AppProvider = ({ children }) => {
   const showToast = (message, type = 'success') => {
     setToastMessage({ message, type, id: Date.now() });
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // ── Notification helpers ──
+  const todosRef = useRef(todos);
+  useEffect(() => { todosRef.current = todos; }, [todos]);
+
+  const goToTodos = useCallback(() => {
+    setActivePage('todos');
+    window.focus();
+  }, []);
+
+  // Start / restart scheduler whenever permission changes
+  useEffect(() => {
+    if (notifPermission === 'granted') {
+      startNotifScheduler(() => todosRef.current, goToTodos);
+    } else {
+      stopNotifScheduler();
+    }
+    return () => stopNotifScheduler();
+  }, [notifPermission, goToTodos]);
+
+  // Also re-check notifications immediately whenever todos change
+  useEffect(() => {
+    if (notifPermission === 'granted') {
+      checkAndNotify(todos, goToTodos);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todos]);
+
+  const requestNotifications = async () => {
+    const result = await requestNotifPermission();
+    setNotifPermission(result);
+    if (result === 'granted') {
+      showToast('🔔 Notifications enabled! You\'ll get task reminders.', 'success');
+      checkAndNotify(todos, goToTodos);
+    } else if (result === 'denied') {
+      showToast('Notifications blocked. Enable them in browser settings.', 'danger');
+    }
+    return result;
   };
 
   // Greeting Generator
@@ -396,6 +446,10 @@ export const AppProvider = ({ children }) => {
         exportDataAsJSON,
         importDataFromJSON,
         resetAllDataToDefaults,
+
+        // Notifications
+        notifPermission,
+        requestNotifications,
 
         // Dynamic Calculations
         todayExpensesTotal,
