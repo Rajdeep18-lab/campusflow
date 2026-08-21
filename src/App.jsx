@@ -9,6 +9,8 @@ import { QuickAddExpenseModal } from './components/QuickAddExpenseModal';
 import { TaskModal } from './components/TaskModal';
 import { BudgetModal } from './components/BudgetModal';
 import { Toast } from './components/Toast';
+import { PWAInstallBanner } from './components/PWAInstallBanner';
+import { PWAUpdater, PWAOfflineIndicator } from './components/PWAStatus';
 import { Plus, CreditCard, CheckSquare } from 'lucide-react';
 
 import { DashboardView } from './views/DashboardView';
@@ -205,6 +207,11 @@ const MainContent = () => {
       <TaskModal />
       <BudgetModal />
       <Toast />
+
+      {/* PWA Components */}
+      <PWAInstallBanner />
+      <PWAUpdater />
+      <PWAOfflineIndicator />
     </div>
   );
 };

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Graduation cap -->
+  <path d="M256 160L360 210L256 260L152 210Z" fill="url(#grad1)" opacity="0.95"/>
+  <path d="M320 237V295C320 295 292 320 256 320C220 320 192 295 192 295V237L256 262L320 237Z" fill="url(#grad2)"/>
+  <line x1="360" y1="210" x2="360" y2="265" stroke="url(#grad2)" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="360" cy="272" r="10" fill="#14B8A6"/>
+  <!-- Checkmark -->
+  <path d="M170 340L215 385L342 258" stroke="url(#grad1)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#020617"/>
+      <stop offset="1" stop-color="#0A1628"/>
+    </linearGradient>
+    <linearGradient id="grad1" x1="150" y1="150" x2="380" y2="380" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#059669"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="192" y1="237" x2="320" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#047857"/>
+      <stop offset="1" stop-color="#0F766E"/>
+    </linearGradient>
+  </defs>
+</svg>
