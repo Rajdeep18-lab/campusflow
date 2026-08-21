@@ -1314,6 +1314,10 @@ h1, h2, h3, h4, h5, h6, .text-heading {
   transition: background var(--duration-fast) var(--ease-smooth),
               border-left-color var(--duration-fast) var(--ease-smooth);
   cursor: default;
+  /* Prevent browser "Cut/Copy" context menu on long-press */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .task-card:hover {
@@ -1405,5 +1409,47 @@ h1, h2, h3, h4, h5, h6, .text-heading {
   border: 1px solid rgba(16, 185, 129, 0.14);
   border-radius: var(--radius-xl);
   padding: 20px 24px;
+}
+
+/* ============================================================
+   RESPONSIVE — TASK MANAGER
+   ============================================================ */
+@media (max-width: 640px) {
+  /* Tab bar: scrollable pill row */
+  .tab-group {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    width: 100%;
+  }
+  .tab-group::-webkit-scrollbar { display: none; }
+
+  /* Bigger touch targets for icon buttons */
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Task card: use flex-start so long titles don't mis-align checkbox */
+  .task-card {
+    align-items: flex-start;
+    padding: 14px var(--space-4);
+    gap: 10px;
+  }
+
+  /* Checkbox stays vertically centred with first line */
+  .task-card > button:first-child {
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Action buttons column on the right */
+  .task-card > div:last-child {
+    flex-direction: column;
+    gap: 0;
+    align-self: flex-start;
+  }
 }
 

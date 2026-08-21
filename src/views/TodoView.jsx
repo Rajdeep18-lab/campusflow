@@ -135,7 +135,7 @@ export const TodoView = () => {
 
       {/* ── Controls ── */}
       <div className="card" style={{ padding: '12px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {/* Tabs */}
           <div className="tab-group">
             {[
@@ -162,8 +162,9 @@ export const TodoView = () => {
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative' }}>
+          {/* Search + Priority Filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: 140 }}>
               <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
               <input
                 type="text"
@@ -171,10 +172,10 @@ export const TodoView = () => {
                 onChange={e => setSearchTerm(e.target.value)}
                 placeholder="Search tasks..."
                 className="form-input"
-                style={{ paddingLeft: 30, height: 36, width: 160, fontSize: '0.8125rem' }}
+                style={{ paddingLeft: 30, height: 36, width: '100%', fontSize: '0.8125rem' }}
               />
             </div>
-            <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="form-select" style={{ height: 36, width: 'auto', fontSize: '0.8125rem', paddingRight: 28 }}>
+            <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="form-select" style={{ height: 36, width: 'auto', fontSize: '0.8125rem', paddingRight: 28, flexShrink: 0 }}>
               <option value="All">All Priorities</option>
               <option value="High">🔴 High</option>
               <option value="Medium">🔵 Medium</option>
@@ -245,13 +246,14 @@ export const TodoView = () => {
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                     <span style={{
                       fontSize: '0.9rem', fontWeight: 600, letterSpacing: '-0.01em',
                       color: todo.completed ? 'var(--text-muted)' : overdue ? 'var(--color-danger)' : 'var(--text-primary)',
                       textDecoration: todo.completed ? 'line-through' : 'none',
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      maxWidth: 340,
+                      overflow: 'hidden', textOverflow: 'ellipsis',
+                      /* Let it wrap naturally; ellipsis kicks in only when truly constrained */
+                      minWidth: 0, flex: '1 1 auto', maxWidth: '100%',
                     }}>
                       {todo.title}
                     </span>
@@ -259,13 +261,13 @@ export const TodoView = () => {
                     <span style={{
                       fontSize: '0.5625rem', fontWeight: 700, color: pc.color,
                       background: pc.bg, border: `1px solid ${pc.border}`,
-                      padding: '2px 6px', borderRadius: 20, flexShrink: 0,
+                      padding: '2px 6px', borderRadius: 20, flexShrink: 0, whiteSpace: 'nowrap',
                     }}>
                       {todo.priority}
                     </span>
                     {/* Due date label (overdue / today) */}
                     {dlLabel && (
-                      <span className={`badge ${dlLabel.cls}`} style={{ fontSize: '0.5625rem', padding: '2px 6px', flexShrink: 0 }}>
+                      <span className={`badge ${dlLabel.cls}`} style={{ fontSize: '0.5625rem', padding: '2px 6px', flexShrink: 0, whiteSpace: 'nowrap' }}>
                         {dlLabel.text}
                       </span>
                     )}
@@ -283,7 +285,7 @@ export const TodoView = () => {
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                <div style={{ display: 'flex', gap: 2, flexShrink: 0, alignItems: 'center' }}>
                   <button onClick={() => setEditingTask(todo)} className="btn-icon" style={{ color: '#14b8a6' }} title="Edit task">
                     <Edit3 size={13} />
                   </button>
