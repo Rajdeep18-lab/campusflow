@@ -14,17 +14,28 @@ const COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 hours per-task dedup
 /* ── Permission helpers ── */
 
 export const getNotifPermission = () => {
-  if (!('Notification' in window)) return 'unsupported';
-  return Notification.permission; // 'default' | 'granted' | 'denied'
+  try {
+    if (typeof window === 'undefined') return 'unsupported';
+    if (!('Notification' in window)) return 'unsupported';
+    return Notification.permission; // 'default' | 'granted' | 'denied'
+  } catch {
+    return 'unsupported';
+  }
 };
 
 export const requestNotifPermission = async () => {
-  if (!('Notification' in window)) return 'unsupported';
-  if (Notification.permission === 'granted') return 'granted';
-  if (Notification.permission === 'denied') return 'denied';
-  const result = await Notification.requestPermission();
-  return result;
+  try {
+    if (typeof window === 'undefined') return 'unsupported';
+    if (!('Notification' in window)) return 'unsupported';
+    if (Notification.permission === 'granted') return 'granted';
+    if (Notification.permission === 'denied') return 'denied';
+    const result = await Notification.requestPermission();
+    return result;
+  } catch {
+    return 'unsupported';
+  }
 };
+
 
 /* ── Deduplication store ── */
 

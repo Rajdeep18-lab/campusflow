@@ -121,38 +121,49 @@ export const AppProvider = ({ children }) => {
   useEffect(() => { todosRef.current = todos; }, [todos]);
 
   const goToTodos = useCallback(() => {
-    setActivePage('todos');
-    window.focus();
+    try {
+      setActivePage('todos');
+      if (typeof window !== 'undefined') window.focus();
+    } catch { /* ignore */ }
   }, []);
 
   // Start / restart scheduler whenever permission changes
   useEffect(() => {
-    if (notifPermission === 'granted') {
-      startNotifScheduler(() => todosRef.current, goToTodos);
-    } else {
-      stopNotifScheduler();
-    }
-    return () => stopNotifScheduler();
+    try {
+      if (notifPermission === 'granted') {
+        startNotifScheduler(() => todosRef.current, goToTodos);
+      } else {
+        stopNotifScheduler();
+      }
+    } catch { /* ignore */ }
+    return () => { try { stopNotifScheduler(); } catch { /* ignore */ } };
   }, [notifPermission, goToTodos]);
 
   // Also re-check notifications immediately whenever todos change
   useEffect(() => {
-    if (notifPermission === 'granted') {
-      checkAndNotify(todos, goToTodos);
-    }
+    try {
+      if (notifPermission === 'granted') {
+        checkAndNotify(todos, goToTodos);
+      }
+    } catch { /* ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todos]);
 
   const requestNotifications = async () => {
-    const result = await requestNotifPermission();
-    setNotifPermission(result);
-    if (result === 'granted') {
-      showToast('🔔 Notifications enabled! You\'ll get task reminders.', 'success');
-      checkAndNotify(todos, goToTodos);
-    } else if (result === 'denied') {
-      showToast('Notifications blocked. Enable them in browser settings.', 'danger');
+    try {
+      const result = await requestNotifPermission();
+      setNotifPermission(result);
+      if (result === 'granted') {
+        showToast("🔔 Notifications enabled! You'll get task reminders.", 'success');
+        checkAndNotify(todos, goToTodos);
+      } else if (result === 'denied') {
+        showToast('Notifications blocked. Enable them in browser settings.', 'danger');
+      }
+      return result;
+    } catch {
+      return 'unsupported';
     }
-    return result;
+
   };
 
   // Greeting Generator
