@@ -6,9 +6,11 @@ import {
   BarChart3,
   CalendarDays,
   Settings,
-  Sparkles
+  LogOut,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
+import { UserAvatar } from './UserAvatar';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard',  icon: LayoutDashboard },
@@ -20,7 +22,8 @@ const NAV_ITEMS = [
 ];
 
 export const Sidebar = ({ closeMobileSidebar }) => {
-  const { activePage, setActivePage } = useApp();
+  const { activePage, setActivePage, profile } = useApp();
+  const { currentUser, logout } = useAuth();
 
   const handleNav = (id) => {
     setActivePage(id);
@@ -93,8 +96,80 @@ export const Sidebar = ({ closeMobileSidebar }) => {
         </div>
       </nav>
 
-      {/* Footer promo */}
+      {/* Footer promo & user account */}
       <div className="sidebar-footer">
+        {currentUser && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 10px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-base)',
+              marginBottom: 10,
+              gap: 8,
+            }}
+          >
+            <div
+              onClick={() => handleNav('settings')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                minWidth: 0,
+                cursor: 'pointer',
+                flex: 1,
+              }}
+              title="View Profile & Settings"
+            >
+              <UserAvatar size="sm" />
+              <div style={{ minWidth: 0 }}>
+                <div style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1.2,
+                }}>
+                  {profile?.name || currentUser.displayName || 'Student'}
+                </div>
+                <div style={{
+                  fontSize: '0.625rem',
+                  color: 'var(--text-muted)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {currentUser.email}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              title="Sign Out"
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 4,
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                borderRadius: 4,
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
+        )}
+
         <div className="sidebar-promo-card">
           <div style={{
             fontSize: '0.625rem',

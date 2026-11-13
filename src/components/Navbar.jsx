@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Sun, Moon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { UserAvatar } from './UserAvatar';
 
 export const Navbar = () => {
@@ -11,6 +12,8 @@ export const Navbar = () => {
     setIsGlobalSearchOpen,
     setActivePage,
   } = useApp();
+
+  const { currentUser } = useAuth();
 
   const pageTitles = {
     dashboard: 'Dashboard',
@@ -158,7 +161,7 @@ export const Navbar = () => {
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          title="Profile & Settings"
+          title={currentUser?.email ? `Signed in as ${currentUser.email} · Settings` : 'Profile & Settings'}
         >
           <UserAvatar size="sm" />
         </button>

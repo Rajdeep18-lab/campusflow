@@ -14,8 +14,11 @@ import {
   Bell,
   BellOff,
   BellRing,
+  Mail,
+  LogOut,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { UserAvatar } from '../components/UserAvatar';
 
 /* Settings section wrapper */
@@ -67,14 +70,27 @@ export const SettingsView = () => {
     resetAllDataToDefaults,
     notifPermission,
     requestNotifications,
+    showToast,
   } = useApp();
+
+  const { currentUser, logout } = useAuth();
 
   const [nameInput,          setNameInput]          = useState(profile?.name || '');
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isDragOver,         setIsDragOver]         = useState(false);
   const [lastExportTime,     setLastExportTime]     = useState(null);
   const fileInputRef  = useRef(null);
   const imageInputRef = useRef(null);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      showToast?.('Signed out successfully. See you soon!', 'info');
+    } catch (err) {
+      alert(err.message || 'Failed to sign out');
+    }
+  };
 
   const handleNameSave = (e) => {
     e.preventDefault();
@@ -196,6 +212,85 @@ export const SettingsView = () => {
               <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
                 Displayed in greetings across the application.
               </span>
+            </div>
+
+            {/* Logged in Firebase Email */}
+            <div className="form-group" style={{ marginTop: 4 }}>
+              <label className="form-label">Account Email (Firebase)</label>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '9px 12px',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-base)',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <Mail size={15} color="var(--accent)" style={{ flexShrink: 0 }} />
+                  <span style={{
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {currentUser?.email || 'Authenticated User'}
+                  </span>
+                </div>
+                <span style={{
+                  fontSize: '0.6875rem',
+                  fontWeight: 700,
+                  color: 'var(--color-success)',
+                  background: 'var(--color-success-bg)',
+                  padding: '2px 8px',
+                  borderRadius: 20,
+                  border: '1px solid rgba(52,199,123,0.3)',
+                  flexShrink: 0,
+                }}>
+                  Active
+                </span>
+              </div>
+            </div>
+
+            {/* Current Session & Logout */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 12px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-subtle)',
+              marginTop: 4,
+              flexWrap: 'wrap',
+              gap: 10,
+            }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Session Security
+                </div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                  UID: <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem' }}>{currentUser?.uid ? `${currentUser.uid.substring(0, 12)}...` : 'N/A'}</code>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLogoutConfirmOpen(true)}
+                className="btn btn-secondary btn-sm"
+                style={{
+                  color: 'var(--color-danger)',
+                  borderColor: 'rgba(239, 68, 68, 0.3)',
+                  gap: 6,
+                  height: 32,
+                  padding: '0 12px',
+                }}
+              >
+                <LogOut size={13} strokeWidth={2.2} /> Sign Out
+              </button>
             </div>
           </form>
         </div>
@@ -502,6 +597,39 @@ export const SettingsView = () => {
         <ShieldCheck size={14} color="var(--accent)" />
         <span>CampusFlow v1.1.0 · PWA · 100% Offline · Local Storage</span>
       </div>
+
+      {/* ── Logout Confirm Modal ── */}
+      {isLogoutConfirmOpen && (
+        <div className="modal-overlay" onClick={() => setIsLogoutConfirmOpen(false)}>
+          <div className="modal-card max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <LogOut size={20} color="var(--accent)" />
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                  Sign out of CampusFlow?
+                </h3>
+              </div>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
+                You are currently signed in as <strong style={{ color: 'var(--text-primary)' }}>{currentUser?.email}</strong>.
+                Your data is securely saved. You can sign back in anytime to continue where you left off.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button onClick={() => setIsLogoutConfirmOpen(false)} className="btn btn-secondary btn-sm">
+                Stay Signed In
+              </button>
+              <button
+                onClick={() => { setIsLogoutConfirmOpen(false); handleLogout(); }}
+                className="btn btn-primary btn-sm"
+              >
+                Yes, Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Reset Confirm Modal ── */}
       {isResetConfirmOpen && (

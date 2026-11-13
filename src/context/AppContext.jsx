@@ -6,7 +6,8 @@ import {
   startNotifScheduler,
   stopNotifScheduler,
 } from '../services/NotificationService';
-
+import { useAuth } from './AuthContext';
+import { migrateLocalDataToFirestore } from '../firebase/firestore';
 
 const AppContext = createContext();
 
@@ -14,50 +15,135 @@ const defaultProfile = {
   name: '',
   avatarUrl: null,
   theme: 'dark',
-  isOnboarded: false
+  isOnboarded: false,
+};
+
+// Helper to get storage keys based on user UID
+const getUserStorageKeys = (uid) => {
+  if (!uid) {
+    return {
+      profile: 'campusflow_profile_v2',
+      expenses: 'campusflow_expenses_v2',
+      budget: 'campusflow_budget_v2',
+      todos: 'campusflow_todos_v2',
+      migrated: 'campusflow_migrated_v2',
+    };
+  }
+  return {
+    profile: `campusflow_${uid}_profile`,
+    expenses: `campusflow_${uid}_expenses`,
+    budget: `campusflow_${uid}_budget`,
+    todos: `campusflow_${uid}_todos`,
+    migrated: `campusflow_${uid}_migrated`,
+  };
 };
 
 export const AppProvider = ({ children }) => {
-  // LocalStorage Persisted States
-  const [profile, setProfile] = useState(() => {
+  const { currentUser } = useAuth();
+  const currentUid = currentUser?.uid || null;
+
+  // Initial load helper
+  const loadInitialData = useCallback((uid) => {
+    const keys = getUserStorageKeys(uid);
+    let loadedProfile = { ...defaultProfile };
+    let loadedExpenses = [];
+    let loadedBudget = 0;
+    let loadedTodos = [];
+
     try {
-      const saved = localStorage.getItem('campusflow_profile_v2');
-      if (saved) {
-        return { ...defaultProfile, ...JSON.parse(saved) };
+      // Check if migration is needed for this user
+      if (uid) {
+        const isAlreadyMigrated = localStorage.getItem(keys.migrated);
+        const userHasExistingData = localStorage.getItem(keys.expenses);
+
+        // If not migrated and user has no scoped data yet, check for legacy data
+        if (!isAlreadyMigrated && !userHasExistingData) {
+          const legacyProfileStr = localStorage.getItem('campusflow_profile_v2');
+          const legacyExpensesStr = localStorage.getItem('campusflow_expenses_v2');
+          const legacyBudgetStr = localStorage.getItem('campusflow_budget_v2');
+          const legacyTodosStr = localStorage.getItem('campusflow_todos_v2');
+
+          if (legacyProfileStr) {
+            try { loadedProfile = { ...defaultProfile, ...JSON.parse(legacyProfileStr) }; } catch { /* ignore */ }
+          }
+          if (legacyExpensesStr) {
+            try { loadedExpenses = JSON.parse(legacyExpensesStr); } catch { /* ignore */ }
+          }
+          if (legacyBudgetStr) {
+            try { loadedBudget = JSON.parse(legacyBudgetStr); } catch { /* ignore */ }
+          }
+          if (legacyTodosStr) {
+            try { loadedTodos = JSON.parse(legacyTodosStr); } catch { /* ignore */ }
+          }
+
+          // If user displayName exists from auth, populate it
+          if (!loadedProfile.name && currentUser?.displayName) {
+            loadedProfile.name = currentUser.displayName;
+          }
+
+          // Copy into scoped storage for this user (PRESERVING legacy storage as requested)
+          localStorage.setItem(keys.profile, JSON.stringify(loadedProfile));
+          localStorage.setItem(keys.expenses, JSON.stringify(loadedExpenses));
+          localStorage.setItem(keys.budget, JSON.stringify(loadedBudget));
+          localStorage.setItem(keys.todos, JSON.stringify(loadedTodos));
+          localStorage.setItem(keys.migrated, 'true');
+
+          // Trigger background migration to Cloud Firestore if available
+          migrateLocalDataToFirestore(uid, {
+            profile: loadedProfile,
+            expenses: loadedExpenses,
+            monthlyBudget: loadedBudget,
+            todos: loadedTodos,
+          }).catch(err => console.warn('[CampusFlow] Background Firestore migration note:', err));
+
+          return { profile: loadedProfile, expenses: loadedExpenses, budget: loadedBudget, todos: loadedTodos };
+        }
+      }
+
+      // Standard load from scoped keys
+      const savedProfile = localStorage.getItem(keys.profile);
+      if (savedProfile) {
+        loadedProfile = { ...defaultProfile, ...JSON.parse(savedProfile) };
+      } else if (currentUser?.displayName) {
+        loadedProfile.name = currentUser.displayName;
+      }
+
+      const savedExpenses = localStorage.getItem(keys.expenses);
+      if (savedExpenses) {
+        loadedExpenses = JSON.parse(savedExpenses);
+      }
+
+      const savedBudget = localStorage.getItem(keys.budget);
+      if (savedBudget) {
+        loadedBudget = JSON.parse(savedBudget);
+      }
+
+      const savedTodos = localStorage.getItem(keys.todos);
+      if (savedTodos) {
+        loadedTodos = JSON.parse(savedTodos);
       }
     } catch (e) {
-      console.error('Failed to parse profile', e);
+      console.error('[CampusFlow] Failed to load data from storage:', e);
     }
-    return defaultProfile;
-  });
 
-  const [expenses, setExpenses] = useState(() => {
-    try {
-      const saved = localStorage.getItem('campusflow_expenses_v2');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      console.error('Failed to parse expenses', e);
-      return [];
-    }
-  });
+    return { profile: loadedProfile, expenses: loadedExpenses, budget: loadedBudget, todos: loadedTodos };
+  }, [currentUser]);
 
-  const [monthlyBudget, setMonthlyBudget] = useState(() => {
-    try {
-      const saved = localStorage.getItem('campusflow_budget_v2');
-      return saved ? JSON.parse(saved) : 0;
-    } catch {
-      return 0;
-    }
-  });
+  const initialData = loadInitialData(currentUid);
 
-  const [todos, setTodos] = useState(() => {
-    try {
-      const saved = localStorage.getItem('campusflow_todos_v2');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [profile, setProfile] = useState(initialData.profile);
+  const [expenses, setExpenses] = useState(initialData.expenses);
+  const [monthlyBudget, setMonthlyBudget] = useState(initialData.budget);
+  const [todos, setTodos] = useState(initialData.todos);
+
+  // When authenticated user changes (login, logout, switch account), reload data safely
+  useEffect(() => {
+    const data = loadInitialData(currentUid);
+    setProfile(data.profile);
+    setExpenses(data.expenses);
+    setMonthlyBudget(data.budget);
+    setTodos(data.todos);
+  }, [currentUid, loadInitialData]);
 
   // UI & Navigation States
   const [activePage, setActivePage] = useState('dashboard');
@@ -76,39 +162,43 @@ export const AppProvider = ({ children }) => {
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
 
-  // Synchronize to LocalStorage
+  // Synchronize to LocalStorage using user-scoped keys
   useEffect(() => {
+    const keys = getUserStorageKeys(currentUid);
     try {
-      localStorage.setItem('campusflow_profile_v2', JSON.stringify(profile));
+      localStorage.setItem(keys.profile, JSON.stringify(profile));
       document.documentElement.setAttribute('data-theme', profile.theme || 'dark');
     } catch (e) {
       console.error('Failed to save profile', e);
     }
-  }, [profile]);
+  }, [profile, currentUid]);
 
   useEffect(() => {
+    const keys = getUserStorageKeys(currentUid);
     try {
-      localStorage.setItem('campusflow_expenses_v2', JSON.stringify(expenses));
+      localStorage.setItem(keys.expenses, JSON.stringify(expenses));
     } catch (e) {
       console.error('Failed to save expenses', e);
     }
-  }, [expenses]);
+  }, [expenses, currentUid]);
 
   useEffect(() => {
+    const keys = getUserStorageKeys(currentUid);
     try {
-      localStorage.setItem('campusflow_budget_v2', JSON.stringify(monthlyBudget));
+      localStorage.setItem(keys.budget, JSON.stringify(monthlyBudget));
     } catch (e) {
       console.error('Failed to save budget', e);
     }
-  }, [monthlyBudget]);
+  }, [monthlyBudget, currentUid]);
 
   useEffect(() => {
+    const keys = getUserStorageKeys(currentUid);
     try {
-      localStorage.setItem('campusflow_todos_v2', JSON.stringify(todos));
+      localStorage.setItem(keys.todos, JSON.stringify(todos));
     } catch (e) {
       console.error('Failed to save todos', e);
     }
-  }, [todos]);
+  }, [todos, currentUid]);
 
   // Toast Helper
   const showToast = (message, type = 'success') => {
@@ -163,13 +253,12 @@ export const AppProvider = ({ children }) => {
     } catch {
       return 'unsupported';
     }
-
   };
 
   // Greeting Generator
   const getGreeting = () => {
     const hour = new Date().getHours();
-    const displayName = profile.name ? profile.name : 'Student';
+    const displayName = profile.name || currentUser?.displayName || 'Student';
     if (hour >= 5 && hour < 12) {
       return `Good Morning, ${displayName} 👋`;
     } else if (hour >= 12 && hour < 17) {
@@ -186,7 +275,7 @@ export const AppProvider = ({ children }) => {
     setProfile(prev => ({
       ...prev,
       name: trimmed,
-      isOnboarded: true
+      isOnboarded: true,
     }));
     showToast(`Welcome to CampusFlow, ${trimmed}! 🎉`);
   };
@@ -205,7 +294,7 @@ export const AppProvider = ({ children }) => {
       category: newExp.category || 'Others',
       date: newExp.date || new Date().toISOString().split('T')[0],
       notes: newExp.notes ? newExp.notes.trim() : '',
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     setExpenses(prev => [item, ...prev]);
     showToast(`Expense "${item.title}" added (₹${item.amount.toLocaleString('en-IN')})`);
@@ -224,7 +313,7 @@ export const AppProvider = ({ children }) => {
       amount: amountNum,
       category: fields.category || 'Others',
       date: fields.date || e.date,
-      notes: fields.notes ? fields.notes.trim() : ''
+      notes: fields.notes ? fields.notes.trim() : '',
     } : e));
     showToast('Expense updated successfully!');
     return true;
@@ -242,7 +331,7 @@ export const AppProvider = ({ children }) => {
         ...target,
         id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         title: `${target.title} (Copy)`,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
       setExpenses(prev => [dup, ...prev]);
       showToast(`Duplicated "${target.title}"`);
@@ -261,7 +350,7 @@ export const AppProvider = ({ children }) => {
       priority: newTodo.priority || 'Medium',
       dueDate: newTodo.dueDate || new Date().toISOString().split('T')[0],
       completed: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     setTodos(prev => [item, ...prev]);
     showToast(`Task "${item.title}" created!`);
@@ -277,7 +366,7 @@ export const AppProvider = ({ children }) => {
       ...t,
       title: fields.title.trim(),
       priority: fields.priority || 'Medium',
-      dueDate: fields.dueDate || t.dueDate
+      dueDate: fields.dueDate || t.dueDate,
     } : t));
     showToast('Task updated!');
     return true;
@@ -330,12 +419,14 @@ export const AppProvider = ({ children }) => {
     try {
       const backupData = {
         app: 'CampusFlow',
-        version: '1.0.0',
+        version: '2.0.0',
+        userId: currentUid,
+        userEmail: currentUser?.email || null,
         exportDate: new Date().toISOString(),
         profile,
         expenses,
         monthlyBudget,
-        todos
+        todos,
       };
       const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -371,30 +462,35 @@ export const AppProvider = ({ children }) => {
   };
 
   const resetAllDataToDefaults = () => {
-    localStorage.clear();
+    const keys = getUserStorageKeys(currentUid);
+    try {
+      localStorage.removeItem(keys.profile);
+      localStorage.removeItem(keys.expenses);
+      localStorage.removeItem(keys.budget);
+      localStorage.removeItem(keys.todos);
+    } catch (e) {
+      console.error(e);
+    }
     setProfile(defaultProfile);
     setExpenses([]);
     setMonthlyBudget(0);
     setTodos([]);
     setActivePage('dashboard');
-    showToast('All local data cleared. Fresh start initialized.', 'info');
+    showToast('Your user data has been cleared. Fresh start initialized.', 'info');
   };
 
   // Dynamic Calculations
   const todayStr = new Date().toISOString().split('T')[0];
   const currentMonthStr = todayStr.substring(0, 7); // YYYY-MM
 
-  // Total expenses for today
   const todayExpensesTotal = expenses
     .filter(e => e.date === todayStr)
     .reduce((sum, e) => sum + e.amount, 0);
 
-  // Total expenses for the current month
   const monthlyExpensesTotal = expenses
     .filter(e => e.date && e.date.startsWith(currentMonthStr))
     .reduce((sum, e) => sum + e.amount, 0);
 
-  // Overall total expenses recorded
   const totalExpensesAllTime = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   const remainingBudget = monthlyBudget > 0 ? monthlyBudget - monthlyExpensesTotal : 0;
@@ -469,7 +565,7 @@ export const AppProvider = ({ children }) => {
         pendingTasksCount,
         completedTasksCount,
         totalTasksCount,
-        taskCompletionPercent
+        taskCompletionPercent,
       }}
     >
       {children}

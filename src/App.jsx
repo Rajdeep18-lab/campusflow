@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
+import { useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { BottomNav } from './components/BottomNav';
@@ -19,6 +20,7 @@ import { TodoView } from './views/TodoView';
 import { AnalyticsView } from './views/AnalyticsView';
 import { CalendarView } from './views/CalendarView';
 import { SettingsView } from './views/SettingsView';
+import { AuthView } from './views/AuthView';
 
 const MainContent = () => {
   const { activePage, setIsQuickAddExpenseOpen, setIsTaskModalOpen } = useApp();
@@ -217,6 +219,64 @@ const MainContent = () => {
 };
 
 export default function App() {
+  const { currentUser, loading } = useAuth();
+
+  // Loading splash while checking auth state
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg-base)',
+          gap: 16,
+        }}
+      >
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 'var(--radius-xl)',
+            background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 24px rgba(232,163,61,0.35)',
+            animation: 'pulse 1.8s infinite',
+          }}
+        >
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4 12h7" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <div
+          style={{
+            fontFamily: 'var(--font-heading)',
+            fontSize: '1rem',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          CampusFlow
+        </div>
+        <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+          Authenticating...
+        </div>
+      </div>
+    );
+  }
+
+  // If not logged in, show Auth View (Login / Signup / Forgot Password)
+  if (!currentUser) {
+    return <AuthView />;
+  }
+
+  // Authenticated: provide AppContext scoped to this user
   return (
     <AppProvider>
       <MainContent />

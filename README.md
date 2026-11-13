@@ -177,19 +177,61 @@ Ensure you have the following installed on your machine:
    npm install
    ```
 
-4. **Start the local development server:**
+4. **Configure Firebase Environment Variables:**
+   Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+   Add your Firebase credentials from [Firebase Console](https://console.firebase.google.com/) -> Project Settings:
+   ```env
+   VITE_FIREBASE_API_KEY=your_api_key_here
+   VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+   ```
+
+5. **Start the local development server:**
    ```bash
    npm run dev
    ```
 
-5. **Open in browser:**
+6. **Open in browser:**
    Open your browser and navigate to `http://localhost:5173`.
+
+---
+
+## 🔐 Firebase Authentication & Security Architecture
+
+CampusFlow features Firebase Authentication integrated with user-scoped isolation:
+- **Email & Password Authentication**: Signup, Login, Password Reset, and secure Logout.
+- **Persistent Sessions**: Real-time auth state synchronization via `onAuthStateChanged`.
+- **User-Isolated Storage**: LocalStorage and Firestore data structures are strictly isolated using the Firebase `uid` (`campusflow_{uid}_expenses`, etc.) preventing cross-user data leakage.
+- **Legacy Migration**: Existing offline records are automatically migrated into the user's secure account without deleting original local records.
+- **Cloud Firestore Ready**: Schema structure and batch migration utilities prepared under `/users/{uid}/...`.
 
 ---
 
 ## 📦 Production Build & Deployment
 
-### Building for Production
+### Deploying to Vercel (Recommended)
+
+CampusFlow is pre-configured for seamless SPA deployment on [Vercel](https://vercel.com):
+
+1. Import your GitHub repository into Vercel.
+2. In **Project Settings** -> **Environment Variables**, add the Firebase keys:
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_AUTH_DOMAIN`
+   - `VITE_FIREBASE_PROJECT_ID`
+   - `VITE_FIREBASE_STORAGE_BUCKET`
+   - `VITE_FIREBASE_MESSAGING_SENDER_ID`
+   - `VITE_FIREBASE_APP_ID`
+   - `VITE_FIREBASE_MEASUREMENT_ID`
+3. Click **Deploy**. Vercel will automatically build Vite and route all client-side paths via `vercel.json`.
+
+### Building for Production Locally
 
 To compile static assets for production deployment:
 ```bash
