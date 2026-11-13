@@ -41,7 +41,7 @@ export const OnboardingModal = () => {
         {/* Top accent bar */}
         <div style={{
           height: 4,
-          background: 'linear-gradient(90deg, #E8A33D, #34C77B, #6C8EF5)',
+          background: 'var(--accent)',
         }} />
 
         <div style={{ padding: '32px 24px' }}>
@@ -50,14 +50,14 @@ export const OnboardingModal = () => {
             width: 64,
             height: 64,
             borderRadius: 'var(--radius-2xl)',
-            background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
+            background: 'var(--accent)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 20px',
-            boxShadow: '0 8px 28px rgba(232,163,61,0.35)',
+            boxShadow: '0 8px 24px rgba(31,77,58,0.25)',
           }}>
-            <GraduationCap size={32} color="#0F172A" strokeWidth={2} />
+            <GraduationCap size={32} color="#FFFFFF" strokeWidth={2} />
           </div>
 
           {/* Title */}

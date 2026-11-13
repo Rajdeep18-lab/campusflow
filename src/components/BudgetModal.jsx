@@ -40,10 +40,10 @@ export const BudgetModal = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 'var(--radius-md)',
-              background: 'rgba(139,92,246,0.1)',
+              background: 'var(--accent-subtle)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <PiggyBank size={17} color="#8b5cf6" strokeWidth={2} />
+              <PiggyBank size={17} color="var(--accent)" strokeWidth={2} />
             </div>
             <div>
               <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>

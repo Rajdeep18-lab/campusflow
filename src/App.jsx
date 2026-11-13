@@ -124,14 +124,14 @@ const MainContent = () => {
               width: 44,
               height: 44,
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
-              color: '#0F172A',
+              background: 'var(--accent)',
+              color: '#FFFFFF',
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(232,163,61,0.5)',
+              boxShadow: '0 4px 14px var(--accent-glow)',
               flexShrink: 0,
             }}
           >
@@ -240,17 +240,17 @@ export default function App() {
             width: 56,
             height: 56,
             borderRadius: 'var(--radius-xl)',
-            background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
+            background: 'var(--accent)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(232,163,61,0.35)',
+            boxShadow: '0 8px 24px var(--accent-glow)',
             animation: 'pulse 1.8s infinite',
           }}
         >
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M4 12h7" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round"/>
+            <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M4 12h7" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
         </div>
         <div

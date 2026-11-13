@@ -8,6 +8,9 @@ import {
   PiggyBank,
   Target,
   Clock,
+  ArrowRight,
+  AlertTriangle,
+  CalendarDays,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { EmptyState } from '../components/EmptyState';
@@ -18,9 +21,9 @@ const CATEGORY_EMOJIS = {
 };
 
 const CATEGORY_COLORS = {
-  Food: '#F0A24B', Travel: '#6FB6E8', Books: '#8A7FE8',
-  Hostel: '#E8875B', Mess: '#4FBF8B', Shopping: '#E86FA8',
-  Recharge: '#5BCFE0', Entertainment: '#C98AE8', Others: '#9AA5B8',
+  Food: '#C77726', Travel: '#4A7C59', Books: '#685B88',
+  Hostel: '#B25D42', Mess: '#2F6B4F', Shopping: '#A85A75',
+  Recharge: '#3C6E71', Entertainment: '#7D688D', Others: '#7A7568',
 };
 
 /* ─── Priority Badge ─── */
@@ -34,28 +37,28 @@ const PriorityBadge = ({ priority }) => {
 };
 
 /* ─── Section Header ─── */
-const SectionHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, actions }) => (
+const SectionHeader = ({ icon: Icon, title, subtitle, actions }) => (
   <div style={{
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
     flexWrap: 'wrap',
-    marginBottom: 20,
+    marginBottom: 16,
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{
         width: 36,
         height: 36,
         borderRadius: 'var(--radius-md)',
-        background: iconBg,
+        background: 'var(--accent-muted)',
+        border: '1px solid var(--accent-border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        border: '1px solid var(--border-base)',
       }}>
-        <Icon size={18} color={iconColor} strokeWidth={2} />
+        <Icon size={18} color="var(--accent)" strokeWidth={2.2} />
       </div>
       <div>
         <h2 style={{
@@ -63,7 +66,7 @@ const SectionHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, actions
           fontSize: '1.125rem',
           fontWeight: 700,
           color: 'var(--text-primary)',
-          letterSpacing: '-0.025em',
+          letterSpacing: '-0.02em',
           lineHeight: 1.2,
         }}>
           {title}
@@ -72,7 +75,6 @@ const SectionHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, actions
           fontSize: '0.75rem',
           color: 'var(--text-muted)',
           marginTop: 2,
-          fontWeight: 400,
         }}>
           {subtitle}
         </p>
@@ -94,6 +96,7 @@ export const DashboardView = () => {
     monthlyBudget,
     todayExpensesTotal,
     remainingBudget,
+    budgetUsagePercent,
     taskCompletionPercent,
     setIsQuickAddExpenseOpen,
     setIsTaskModalOpen,
@@ -109,7 +112,7 @@ export const DashboardView = () => {
   const [expCat]    = useState('All');
   const [taskTab]   = useState('all');
 
-  const todayStr   = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split('T')[0];
   const todayTasks = todos.filter(t => t.dueDate === todayStr);
 
   /* Filtered expenses */
@@ -129,35 +132,52 @@ export const DashboardView = () => {
     return true;
   });
 
-  const formattedDateStr = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+  const formattedDateStr = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
 
       {/* ═══════════════════════════════════════════════
-          TODAY SNAPSHOT & GREETING HERO BANNER
+          HERO SNAPSHOT & GREETING BANNER
          ═══════════════════════════════════════════════ */}
       <div className="today-snapshot">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+              <h1 style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: '1.45rem',
+                fontWeight: 800,
+                letterSpacing: '-0.03em',
+                color: 'var(--text-primary)',
+              }}>
                 {getGreeting()}
               </h1>
             </div>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-              Here is your daily snapshot for <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-secondary)' }}>{formattedDateStr}</span>.
+              Today is <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-secondary)' }}>{formattedDateStr}</span>. Here is your campus overview.
             </p>
           </div>
 
           {/* Quick Actions */}
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
             <button onClick={() => setIsQuickAddExpenseOpen(true)} className="btn btn-primary btn-sm">
-              <Plus size={13} strokeWidth={2.5} />
+              <Plus size={14} strokeWidth={2.5} />
               Add Expense
             </button>
             <button onClick={() => setIsTaskModalOpen(true)} className="btn btn-secondary btn-sm">
-              <Plus size={13} strokeWidth={2.5} />
+              <Plus size={14} strokeWidth={2.5} />
               Add Task
             </button>
           </div>
@@ -166,99 +186,198 @@ export const DashboardView = () => {
         {/* 4 Key Snapshot Metric Chips */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
           gap: 12,
           marginTop: 20,
         }}>
           {/* Today's Expense */}
           <div style={{
-            background: 'var(--bg-card)', padding: '14px 16px', borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-subtle)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            background: 'var(--bg-card)',
+            padding: '14px 16px',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-base)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            boxShadow: 'var(--shadow-xs)',
           }}>
             <div>
               <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Today's Spend
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em', marginTop: 2 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.02em', marginTop: 2 }}>
                 ₹{todayExpensesTotal.toLocaleString('en-IN')}
               </div>
             </div>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(52,199,123,0.12)', border: '1px solid rgba(52,199,123,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <TrendingUp size={18} color="var(--color-success)" />
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--accent-muted)',
+              border: '1px solid var(--accent-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <TrendingUp size={18} color="var(--accent)" />
             </div>
           </div>
 
           {/* Today's Tasks */}
           <div style={{
-            background: 'var(--bg-card)', padding: '14px 16px', borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-subtle)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            background: 'var(--bg-card)',
+            padding: '14px 16px',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-base)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            boxShadow: 'var(--shadow-xs)',
           }}>
             <div>
               <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Today's Tasks
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent-blue)', letterSpacing: '-0.02em', marginTop: 2 }}>
-                {todayTasks.filter(t => !t.completed).length} <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>pending</span>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: 2 }}>
+                {todayTasks.filter(t => !t.completed).length} <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)' }}>pending</span>
               </div>
             </div>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(108,142,245,0.12)', border: '1px solid rgba(108,142,245,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Clock size={18} color="var(--accent-blue)" />
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(60, 110, 113, 0.12)',
+              border: '1px solid rgba(60, 110, 113, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <Clock size={18} color="var(--color-info)" />
             </div>
           </div>
 
           {/* Remaining Budget */}
-          <div style={{
-            background: 'var(--bg-card)', padding: '14px 16px', borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-subtle)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-            transition: 'all 0.15s',
-          }} onClick={() => setIsBudgetModalOpen(true)}>
+          <div
+            onClick={() => setIsBudgetModalOpen(true)}
+            style={{
+              background: 'var(--bg-card)',
+              padding: '14px 16px',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border-base)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              boxShadow: 'var(--shadow-xs)',
+              transition: 'border-color 0.15s',
+            }}
+            title="Click to adjust monthly budget"
+          >
             <div>
               <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Budget Left
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: isOverBudget ? 'var(--color-danger)' : 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: 2 }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: '1.25rem',
+                fontWeight: 800,
+                color: isOverBudget ? 'var(--color-danger)' : 'var(--text-primary)',
+                letterSpacing: '-0.02em',
+                marginTop: 2,
+              }}>
                 {monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Set Budget'}
               </div>
             </div>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(232,163,61,0.12)', border: '1px solid rgba(232,163,61,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <PiggyBank size={18} color="var(--accent)" />
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 'var(--radius-md)',
+              background: isOverBudget ? 'var(--color-danger-bg)' : 'var(--accent-muted)',
+              border: `1px solid ${isOverBudget ? 'rgba(200, 70, 48, 0.3)' : 'var(--accent-border)'}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <PiggyBank size={18} color={isOverBudget ? 'var(--color-danger)' : 'var(--accent)'} />
             </div>
           </div>
 
           {/* Task Progress */}
           <div style={{
-            background: 'var(--bg-card)', padding: '14px 16px', borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-subtle)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            background: 'var(--bg-card)',
+            padding: '14px 16px',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-base)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            boxShadow: 'var(--shadow-xs)',
           }}>
             <div>
               <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Task Progress
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.02em', marginTop: 2 }}>
-                {taskCompletionPercent}% <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>done</span>
+                {taskCompletionPercent}% <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)' }}>done</span>
               </div>
             </div>
-            <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-md)', background: 'rgba(138,127,232,0.12)', border: '1px solid rgba(138,127,232,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Target size={18} color="#8A7FE8" />
+            <div style={{
+              width: 38,
+              height: 38,
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--accent-muted)',
+              border: '1px solid var(--accent-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <Target size={18} color="var(--accent)" />
             </div>
           </div>
         </div>
+
+        {/* Budget Progress Bar */}
+        {monthlyBudget > 0 && (
+          <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                Monthly Budget Utilization: <strong style={{ color: 'var(--text-primary)' }}>{budgetUsagePercent}%</strong>
+              </span>
+              {isOverBudget && (
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <AlertTriangle size={13} /> Over Budget
+                </span>
+              )}
+            </div>
+            <div className="progress-track" style={{ height: 8 }}>
+              <div
+                className="progress-fill"
+                style={{
+                  width: `${Math.min(budgetUsagePercent, 100)}%`,
+                  background: isOverBudget ? 'var(--color-danger)' : 'var(--accent)',
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ═══════════════════════════════════════════════
-          SECTION 1 — EXPENSES AT A GLANCE
+          SECTION 1 — RECENT EXPENSES
          ═══════════════════════════════════════════════ */}
       <section>
         <SectionHeader
           icon={CreditCard}
-          iconBg="var(--accent-muted)"
-          iconColor="var(--accent)"
-          title="Expense Tracker"
-          subtitle="Log, categorize, and control your daily spending"
+          title="Recent Expenses"
+          subtitle="Keep tabs on daily college expenditure"
           actions={
             <>
               <button onClick={() => setIsQuickAddExpenseOpen(true)} className="btn btn-primary btn-sm">
@@ -266,7 +385,7 @@ export const DashboardView = () => {
                 Log Expense
               </button>
               <button onClick={() => setActivePage('expenses')} className="btn btn-secondary btn-sm">
-                View All →
+                View All <ArrowRight size={13} />
               </button>
             </>
           }
@@ -278,13 +397,13 @@ export const DashboardView = () => {
             <EmptyState
               icon={CreditCard}
               title="No expenses logged yet"
-              description="Keep track of food, transport, books, and hostel expenses."
+              description="Keep track of food, transport, books, hostel rent and more."
               actionLabel="Add First Expense"
               onAction={() => setIsQuickAddExpenseOpen(true)}
             />
           ) : (
             filteredExp.slice(0, 5).map((exp, i) => {
-              const catColor = CATEGORY_COLORS[exp.category] || '#9AA5B8';
+              const catColor = CATEGORY_COLORS[exp.category] || '#7A7568';
               const catEmoji = CATEGORY_EMOJIS[exp.category] || '💡';
               return (
                 <div
@@ -293,8 +412,8 @@ export const DashboardView = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '12px 16px',
-                    borderBottom: i < Math.min(filteredExp.length, 5) - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    padding: '14px 18px',
+                    borderBottom: i < Math.min(filteredExp.length, 5) - 1 ? '1px solid var(--border-base)' : 'none',
                     borderLeft: `3px solid ${catColor}`,
                     transition: 'background 0.12s',
                   }}
@@ -303,28 +422,55 @@ export const DashboardView = () => {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                     <div style={{
-                      width: 36, height: 36, borderRadius: 'var(--radius-md)',
-                      background: `${catColor}15`, border: `1px solid ${catColor}25`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '1rem', flexShrink: 0,
+                      width: 38,
+                      height: 38,
+                      borderRadius: 'var(--radius-md)',
+                      background: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-base)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.05rem',
+                      flexShrink: 0,
                     }}>
                       {catEmoji}
                     </div>
                     <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: 'var(--text-primary)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
                         {exp.title}
                       </div>
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 1 }}>
-                        {exp.category} · <span style={{ fontFamily: 'var(--font-mono)' }}>{exp.date}</span>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                        <span style={{ fontWeight: 600, color: catColor }}>{exp.category}</span> · <span style={{ fontFamily: 'var(--font-mono)' }}>{exp.date}</span>
+                        {exp.notes && ` · ${exp.notes}`}
                       </div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em' }}>
+                    <span style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.9375rem',
+                      fontWeight: 700,
+                      color: 'var(--accent)',
+                      letterSpacing: '-0.02em',
+                    }}>
                       ₹{exp.amount.toLocaleString('en-IN')}
                     </span>
-                    <button onClick={() => deleteExpense(exp.id)} className="btn-icon" style={{ color: 'var(--color-danger)' }} title="Delete">
-                      <Trash2 size={13} />
+                    <button
+                      onClick={() => deleteExpense(exp.id)}
+                      className="btn-icon"
+                      style={{ color: 'var(--text-muted)' }}
+                      onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                      title="Delete expense"
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
@@ -335,15 +481,13 @@ export const DashboardView = () => {
       </section>
 
       {/* ═══════════════════════════════════════════════
-          SECTION 2 — TASKS AT A GLANCE
+          SECTION 2 — ACTIVE TASKS
          ═══════════════════════════════════════════════ */}
       <section>
         <SectionHeader
           icon={CheckSquare}
-          iconBg="rgba(108,142,245,0.12)"
-          iconColor="var(--accent-blue)"
-          title="Daily Tasks &amp; Goals"
-          subtitle="Stay on top of assignments, lab submissions, and exams"
+          title="Daily Tasks &amp; Deadlines"
+          subtitle="Stay on track with assignments, exams, and projects"
           actions={
             <>
               <button onClick={() => setIsTaskModalOpen(true)} className="btn btn-secondary btn-sm">
@@ -351,7 +495,7 @@ export const DashboardView = () => {
                 New Task
               </button>
               <button onClick={() => setActivePage('todos')} className="btn btn-secondary btn-sm">
-                View All →
+                View All <ArrowRight size={13} />
               </button>
             </>
           }
@@ -363,14 +507,18 @@ export const DashboardView = () => {
             <EmptyState
               icon={CheckSquare}
               title="No tasks scheduled"
-              description="Add your daily assignments or study goals."
+              description="Add your study assignments or project milestones."
               actionLabel="Create First Task"
               onAction={() => setIsTaskModalOpen(true)}
             />
           ) : (
             filteredTodos.slice(0, 5).map((todo, i) => {
-              const priorityColors = { High: 'var(--color-danger)', Medium: 'var(--accent-blue)', Low: 'var(--color-success)' };
-              const pColor = priorityColors[todo.priority] || '#9AA5B8';
+              const priorityColors = {
+                High: 'var(--color-danger)',
+                Medium: 'var(--color-info)',
+                Low: 'var(--color-success)',
+              };
+              const pColor = priorityColors[todo.priority] || 'var(--text-muted)';
               return (
                 <div
                   key={todo.id}
@@ -378,10 +526,10 @@ export const DashboardView = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '12px 16px',
-                    borderBottom: i < Math.min(filteredTodos.length, 5) - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    padding: '14px 18px',
+                    borderBottom: i < Math.min(filteredTodos.length, 5) - 1 ? '1px solid var(--border-base)' : 'none',
                     borderLeft: `3px solid ${pColor}`,
-                    opacity: todo.completed ? 0.65 : 1,
+                    opacity: todo.completed ? 0.6 : 1,
                     transition: 'background 0.12s',
                   }}
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
@@ -392,26 +540,42 @@ export const DashboardView = () => {
                       type="checkbox"
                       checked={todo.completed}
                       onChange={() => toggleTodoCompleted(todo.id)}
-                      style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
+                      style={{
+                        width: 18,
+                        height: 18,
+                        accentColor: 'var(--accent)',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
                     />
                     <div style={{ minWidth: 0 }}>
                       <div style={{
-                        fontSize: '0.875rem', fontWeight: 600,
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
                         color: todo.completed ? 'var(--text-muted)' : 'var(--text-primary)',
                         textDecoration: todo.completed ? 'line-through' : 'none',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}>
                         {todo.title}
                       </div>
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 1 }}>
-                        Due <span style={{ fontFamily: 'var(--font-mono)' }}>{todo.dueDate}</span>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <CalendarDays size={12} /> Due <span style={{ fontFamily: 'var(--font-mono)' }}>{todo.dueDate}</span>
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                     <PriorityBadge priority={todo.priority} />
-                    <button onClick={() => deleteTodo(todo.id)} className="btn-icon" style={{ color: 'var(--color-danger)' }} title="Delete">
-                      <Trash2 size={13} />
+                    <button
+                      onClick={() => deleteTodo(todo.id)}
+                      className="btn-icon"
+                      style={{ color: 'var(--text-muted)' }}
+                      onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                      title="Delete task"
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>

@@ -16,7 +16,7 @@ export const Navbar = () => {
   const { currentUser } = useAuth();
 
   const pageTitles = {
-    dashboard: 'Dashboard',
+    dashboard: 'Overview',
     expenses: 'Expense Manager',
     todos: 'Task Manager',
     analytics: 'Analytics & Insights',
@@ -37,19 +37,20 @@ export const Navbar = () => {
           <div style={{
             width: 32, height: 32,
             borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
+            background: 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
+            boxShadow: '0 2px 8px var(--accent-glow)',
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4 12h7" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round"/>
+              <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 12h7" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </div>
           <span style={{
             fontFamily: 'var(--font-heading)',
             fontSize: '0.9375rem',
-            fontWeight: 700,
+            fontWeight: 800,
             color: 'var(--text-primary)',
             letterSpacing: '-0.02em',
           }}>
@@ -78,7 +79,7 @@ export const Navbar = () => {
             lineHeight: 1.2,
             whiteSpace: 'nowrap',
           }}>
-            {pageTitles[activePage] || 'Dashboard'}
+            {pageTitles[activePage] || 'Overview'}
           </h1>
         </div>
       </div>
@@ -100,14 +101,14 @@ export const Navbar = () => {
             color: 'var(--text-muted)',
             cursor: 'pointer',
             fontSize: '0.8125rem',
-            fontWeight: 400,
+            fontWeight: 500,
             transition: 'all 0.15s',
             whiteSpace: 'nowrap',
             maxWidth: 240,
           }}
           onMouseEnter={e => {
             e.currentTarget.style.borderColor = 'var(--border-accent)';
-            e.currentTarget.style.color = 'var(--text-secondary)';
+            e.currentTarget.style.color = 'var(--text-primary)';
           }}
           onMouseLeave={e => {
             e.currentTarget.style.borderColor = 'var(--border-base)';
@@ -121,10 +122,10 @@ export const Navbar = () => {
             display: 'none',
             padding: '2px 5px',
             borderRadius: 4,
-            background: 'var(--bg-base)',
+            background: 'var(--bg-card)',
             border: '1px solid var(--border-base)',
             fontSize: '0.625rem',
-            fontWeight: 500,
+            fontWeight: 600,
             lineHeight: 1.4,
             color: 'var(--text-muted)',
             fontFamily: 'var(--font-mono)',
@@ -141,8 +142,8 @@ export const Navbar = () => {
           aria-label="Toggle theme"
         >
           {profile?.theme === 'dark'
-            ? <Sun size={16} color="#E8A33D" strokeWidth={2} />
-            : <Moon size={16} color="var(--accent)" strokeWidth={2} />
+            ? <Sun size={17} color="var(--accent)" strokeWidth={2.2} />
+            : <Moon size={17} color="var(--accent)" strokeWidth={2.2} />
           }
         </button>
 

@@ -17,15 +17,15 @@ import { useApp } from '../context/AppContext';
 import { EmptyState } from '../components/EmptyState';
 
 const CATEGORY_DATA = {
-  Food:          { emoji: '🍲', color: '#F0A24B', label: 'Food & Dining' },
-  Travel:        { emoji: '🚌', color: '#6FB6E8', label: 'Travel' },
-  Books:         { emoji: '📚', color: '#8A7FE8', label: 'Books' },
-  Hostel:        { emoji: '🏠', color: '#E8875B', label: 'Hostel' },
-  Mess:          { emoji: '🍱', color: '#4FBF8B', label: 'Mess' },
-  Shopping:      { emoji: '🛍️', color: '#E86FA8', label: 'Shopping' },
-  Recharge:      { emoji: '📱', color: '#5BCFE0', label: 'Recharge' },
-  Entertainment: { emoji: '🎬', color: '#C98AE8', label: 'Entertainment' },
-  Others:        { emoji: '💡', color: '#9AA5B8', label: 'Others' },
+  Food:          { emoji: '🍲', color: '#C77726', label: 'Food & Dining' },
+  Travel:        { emoji: '🚌', color: '#4A7C59', label: 'Travel' },
+  Books:         { emoji: '📚', color: '#685B88', label: 'Books' },
+  Hostel:        { emoji: '🏠', color: '#B25D42', label: 'Hostel' },
+  Mess:          { emoji: '🍱', color: '#2F6B4F', label: 'Mess' },
+  Shopping:      { emoji: '🛍️', color: '#A85A75', label: 'Shopping' },
+  Recharge:      { emoji: '📱', color: '#3C6E71', label: 'Recharge' },
+  Entertainment: { emoji: '🎬', color: '#7D688D', label: 'Entertainment' },
+  Others:        { emoji: '💡', color: '#7A7568', label: 'Others' },
 };
 
 const CATEGORIES = ['All', ...Object.keys(CATEGORY_DATA)];
@@ -78,7 +78,7 @@ export const ExpenseView = () => {
     });
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* ── Page Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
@@ -87,111 +87,121 @@ export const ExpenseView = () => {
             Expense Manager
           </h1>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-            Log, track and categorize every rupee spent during college.
+            Log, track and categorize your daily college expenditures.
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button onClick={() => setIsBudgetModalOpen(true)} className="btn btn-secondary btn-sm">
-            <Wallet size={13} style={{ color: 'var(--accent)' }} />
+            <Wallet size={14} style={{ color: 'var(--accent)' }} />
             Set Budget
           </button>
           <button onClick={() => setIsQuickAddExpenseOpen(true)} className="btn btn-primary btn-sm">
-            <Plus size={13} strokeWidth={2.5} />
+            <Plus size={14} strokeWidth={2.5} />
             Add Expense
           </button>
         </div>
       </div>
 
       {/* ── Stat Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
         <div className="stat-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span className="stat-label">Today's Expense</span>
-            <div className="stat-icon-box" style={{ background: 'rgba(52,199,123,0.12)' }}>
-              <TrendingUp size={16} color="var(--color-success)" />
+            <span className="stat-label">Today's Spend</span>
+            <div className="stat-icon-box" style={{ background: 'var(--accent-muted)' }}>
+              <TrendingUp size={16} color="var(--accent)" />
             </div>
           </div>
-          <div className="stat-value" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-success)' }}>₹{todayExpensesTotal.toLocaleString('en-IN')}</div>
+          <div className="stat-value" style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent)' }}>
+            ₹{todayExpensesTotal.toLocaleString('en-IN')}
+          </div>
           <div className="stat-sub">{expenses.filter(e => e.date === todayStr).length} transactions today</div>
         </div>
 
         <div className="stat-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="stat-label">Monthly Total</span>
-            <div className="stat-icon-box" style={{ background: 'rgba(108,142,245,0.12)' }}>
-              <CalendarDays size={16} color="var(--accent-blue)" />
+            <div className="stat-icon-box" style={{ background: 'rgba(60, 110, 113, 0.12)' }}>
+              <CalendarDays size={16} color="var(--color-info)" />
             </div>
           </div>
-          <div className="stat-value" style={{ fontFamily: 'var(--font-mono)' }}>₹{monthlyExpensesTotal.toLocaleString('en-IN')}</div>
+          <div className="stat-value" style={{ fontFamily: 'var(--font-mono)' }}>
+            ₹{monthlyExpensesTotal.toLocaleString('en-IN')}
+          </div>
           <div className="stat-sub">{expenses.length} total transactions</div>
         </div>
 
         <div className="stat-card" onClick={() => setIsBudgetModalOpen(true)} style={{ cursor: 'pointer' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <span className="stat-label">Budget Remaining</span>
-            <div className="stat-icon-box" style={{ background: 'rgba(232,163,61,0.12)' }}>
-              <PiggyBank size={16} color="var(--accent)" />
+            <div className="stat-icon-box" style={{ background: isOverBudget ? 'var(--color-danger-bg)' : 'var(--accent-muted)' }}>
+              <PiggyBank size={16} color={isOverBudget ? 'var(--color-danger)' : 'var(--accent)'} />
             </div>
           </div>
           <div className="stat-value" style={{ fontFamily: 'var(--font-mono)', color: isOverBudget ? 'var(--color-danger)' : undefined }}>
             {monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Not set'}
           </div>
           <div className="stat-sub">
-            {monthlyBudget > 0 ? `${budgetUsagePercent}% of ₹${monthlyBudget.toLocaleString('en-IN')} used` : 'Click to set budget'}
+            {monthlyBudget > 0 ? `${budgetUsagePercent}% of ₹${monthlyBudget.toLocaleString('en-IN')} used` : 'Click to set limit'}
           </div>
         </div>
       </div>
 
       {/* Budget progress bar */}
       {monthlyBudget > 0 && (
-        <div className="card" style={{ padding: '14px 20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              {isOverBudget ? '⚠️ Over Budget' : 'Budget Progress'}
+        <div className="card" style={{ padding: '16px 20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {isOverBudget ? '⚠️ Budget limit exceeded' : 'Monthly Budget Tracking'}
             </span>
             <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: isOverBudget ? 'var(--color-danger)' : 'var(--text-primary)' }}>
               {budgetUsagePercent}% used
             </span>
           </div>
-          <div style={{ height: 8, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-            <div style={{
-              height: '100%', borderRadius: 99,
-              width: `${Math.min(budgetUsagePercent, 100)}%`,
-              background: isOverBudget ? 'linear-gradient(90deg,#ef4444,#dc2626)' : 'linear-gradient(90deg,#10b981,#059669)',
-              transition: 'width 0.8s cubic-bezier(0.16,1,0.3,1)',
-            }} />
+          <div className="progress-track" style={{ height: 8 }}>
+            <div
+              className="progress-fill"
+              style={{
+                width: `${Math.min(budgetUsagePercent, 100)}%`,
+                background: isOverBudget ? 'var(--color-danger)' : 'var(--accent)',
+              }}
+            />
           </div>
         </div>
       )}
 
-      {/* ── Filter Bar ── */}
-      <div className="card" style={{ padding: '12px 16px' }}>
+      {/* ── Search & Filter Bar ── */}
+      <div className="card" style={{ padding: '14px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {/* Search */}
-          <div style={{ position: 'relative', flex: '1 1 180px', maxWidth: 280 }}>
-            <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', flex: '1 1 200px', maxWidth: 320 }}>
+            <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder="Search expenses..."
+              placeholder="Search by title, category, notes..."
               className="form-input"
-              style={{ paddingLeft: 30, height: 34, fontSize: '0.8125rem' }}
+              style={{ paddingLeft: 34, height: 38, fontSize: '0.8125rem' }}
             />
           </div>
 
           <button
             onClick={() => setShowFilters(f => !f)}
             className={`btn btn-sm ${showFilters ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ gap: 6 }}
+            style={{ gap: 6, height: 38 }}
           >
             <SlidersHorizontal size={13} />
-            Filters
+            Categories
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
             <ArrowUpDown size={13} color="var(--text-muted)" />
-            <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="form-select" style={{ height: 34, width: 'auto', fontSize: '0.8125rem', paddingRight: 28 }}>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              className="form-select"
+              style={{ height: 38, width: 'auto', fontSize: '0.8125rem', paddingRight: 28 }}
+            >
               <option value="date-desc">Newest First</option>
               <option value="date-asc">Oldest First</option>
               <option value="amount-desc">Highest Amount</option>
@@ -202,7 +212,16 @@ export const ExpenseView = () => {
 
         {/* Category filter chips */}
         {showFilters && (
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border-base)' }}>
+          <div style={{
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            paddingTop: 12,
+            marginTop: 12,
+            borderTop: '1px solid var(--border-base)',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+          }}>
             {CATEGORIES.map(cat => {
               const isActive = selectedCat === cat;
               const cd = CATEGORY_DATA[cat];
@@ -211,14 +230,20 @@ export const ExpenseView = () => {
                   key={cat}
                   onClick={() => setSelectedCat(cat)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 5,
-                    padding: '5px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
                     borderRadius: 'var(--radius-full)',
-                    border: `1px solid ${isActive ? (cd?.color || 'var(--accent)') : 'var(--border-base)'}`,
-                    background: isActive ? `${cd?.color || 'var(--accent)'}18` : 'var(--bg-tertiary)',
-                    color: isActive ? (cd?.color || 'var(--accent)') : 'var(--text-secondary)',
-                    fontSize: '0.75rem', fontWeight: isActive ? 700 : 500,
-                    cursor: 'pointer', transition: 'all 0.12s',
+                    border: `1px solid ${isActive ? 'var(--accent)' : 'var(--border-base)'}`,
+                    background: isActive ? 'var(--bg-active)' : 'var(--bg-tertiary)',
+                    color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                    fontSize: '0.75rem',
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.12s',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
                   }}
                 >
                   {cd && <span>{cd.emoji}</span>}
@@ -233,7 +258,7 @@ export const ExpenseView = () => {
       {/* ── Results label ── */}
       {(searchTerm || selectedCat !== 'All') && (
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-          Showing {filteredExpenses.length} of {expenses.length} expenses
+          Showing {filteredExpenses.length} of {expenses.length} records
           {selectedCat !== 'All' && ` in ${selectedCat}`}
           {searchTerm && ` matching "${searchTerm}"`}
         </div>
@@ -246,8 +271,8 @@ export const ExpenseView = () => {
           title={expenses.length === 0 ? 'No expenses yet' : 'No matching expenses'}
           description={
             expenses.length === 0
-              ? 'Start logging your college expenses. All data is saved privately on your device.'
-              : 'Try adjusting your search or category filter.'
+              ? 'Start tracking your college spending. All records stay secure on your device.'
+              : 'Try adjusting your search criteria or category filter.'
           }
           actionLabel={expenses.length === 0 ? 'Add First Expense' : undefined}
           onAction={expenses.length === 0 ? () => setIsQuickAddExpenseOpen(true) : undefined}
@@ -255,7 +280,7 @@ export const ExpenseView = () => {
       ) : (
         <div className="card" style={{ overflow: 'hidden' }}>
           {filteredExpenses.map((exp, i) => {
-            const cd      = CATEGORY_DATA[exp.category] || CATEGORY_DATA.Others;
+            const cd = CATEGORY_DATA[exp.category] || CATEGORY_DATA.Others;
             const isToday = exp.date === todayStr;
             return (
               <div
@@ -264,8 +289,8 @@ export const ExpenseView = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 14,
-                  padding: '12px 16px',
-                  borderBottom: i < filteredExpenses.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                  padding: '14px 18px',
+                  borderBottom: i < filteredExpenses.length - 1 ? '1px solid var(--border-base)' : 'none',
                   transition: 'background 0.12s',
                   borderLeft: `3px solid ${cd.color}`,
                 }}
@@ -276,8 +301,8 @@ export const ExpenseView = () => {
                 <div
                   className="cat-pill"
                   style={{
-                    background: `${cd.color}14`,
-                    border: `1px solid ${cd.color}25`,
+                    background: 'var(--bg-tertiary)',
+                    border: '1px solid var(--border-base)',
                   }}
                 >
                   {cd.emoji}
@@ -287,35 +312,52 @@ export const ExpenseView = () => {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{
-                      fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)',
-                      letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden',
-                      textOverflow: 'ellipsis', maxWidth: 260,
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      letterSpacing: '-0.01em',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: 280,
                     }}>
                       {exp.title}
                     </span>
                     {/* Category badge */}
                     <span style={{
-                      fontSize: '0.5625rem', fontWeight: 700, color: cd.color,
-                      background: `${cd.color}15`, border: `1px solid ${cd.color}25`,
-                      padding: '2px 6px', borderRadius: 20, flexShrink: 0,
+                      fontSize: '0.625rem',
+                      fontWeight: 700,
+                      color: cd.color,
+                      background: 'var(--bg-tertiary)',
+                      border: `1px solid var(--border-base)`,
+                      padding: '2px 8px',
+                      borderRadius: 20,
+                      flexShrink: 0,
                     }}>
                       {exp.category}
                     </span>
                     {isToday && (
-                      <span className="badge badge-today" style={{ fontSize: '0.5625rem', padding: '1px 6px' }}>Today</span>
+                      <span className="badge badge-accent" style={{ fontSize: '0.625rem', padding: '2px 7px' }}>
+                        Today
+                      </span>
                     )}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
                     {/* Date */}
-                    <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3, fontFamily: 'var(--font-mono)' }}>
-                      <CalendarDays size={10} />
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)' }}>
+                      <CalendarDays size={11} />
                       {formatDate(exp.date)}
                     </span>
                     {/* Notes preview */}
                     {exp.notes && (
                       <span style={{
-                        fontSize: '0.6875rem', color: 'var(--text-muted)', fontStyle: 'italic',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200,
+                        fontSize: '0.7rem',
+                        color: 'var(--text-muted)',
+                        fontStyle: 'italic',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: 220,
                       }}>
                         · {exp.notes}
                       </span>
@@ -323,25 +365,46 @@ export const ExpenseView = () => {
                   </div>
                 </div>
 
-                {/* Amount */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                {/* Amount & Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                   <span style={{
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '1rem', fontWeight: 800, color: 'var(--color-success)',
-                    letterSpacing: '-0.025em', minWidth: 72, textAlign: 'right',
+                    fontSize: '1rem',
+                    fontWeight: 800,
+                    color: 'var(--accent)',
+                    letterSpacing: '-0.025em',
+                    minWidth: 76,
+                    textAlign: 'right',
                   }}>
                     ₹{exp.amount.toLocaleString('en-IN')}
                   </span>
 
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 2 }}>
-                    <button onClick={() => duplicateExpense(exp.id)} className="btn-icon" title="Duplicate">
+                    <button
+                      onClick={() => duplicateExpense(exp.id)}
+                      className="btn-icon"
+                      title="Duplicate expense"
+                      style={{ minWidth: 32, minHeight: 32 }}
+                    >
                       <Copy size={13} />
                     </button>
-                    <button onClick={() => setEditingExpense(exp)} className="btn-icon" style={{ color: '#14b8a6' }} title="Edit">
+                    <button
+                      onClick={() => setEditingExpense(exp)}
+                      className="btn-icon"
+                      style={{ color: 'var(--accent)' }}
+                      title="Edit expense"
+                      style={{ minWidth: 32, minHeight: 32 }}
+                    >
                       <Edit3 size={13} />
                     </button>
-                    <button onClick={() => deleteExpense(exp.id)} className="btn-icon" style={{ color: 'var(--color-danger)' }} title="Delete">
+                    <button
+                      onClick={() => deleteExpense(exp.id)}
+                      className="btn-icon"
+                      style={{ color: 'var(--color-danger)' }}
+                      title="Delete expense"
+                      style={{ minWidth: 32, minHeight: 32 }}
+                    >
                       <Trash2 size={13} />
                     </button>
                   </div>

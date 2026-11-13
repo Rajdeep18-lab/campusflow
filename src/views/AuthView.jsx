@@ -182,9 +182,9 @@ export const AuthView = () => {
           }}
         >
           {isDark ? (
-            <Sun size={17} color="#E8A33D" strokeWidth={2} />
+            <Sun size={17} color="var(--accent)" strokeWidth={2.2} />
           ) : (
-            <Moon size={17} color="var(--accent)" strokeWidth={2} />
+            <Moon size={17} color="var(--accent)" strokeWidth={2.2} />
           )}
         </button>
       </div>
@@ -205,17 +205,17 @@ export const AuthView = () => {
               width: 52,
               height: 52,
               borderRadius: 'var(--radius-xl)',
-              background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
+              background: 'var(--accent)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: 14,
-              boxShadow: '0 8px 24px rgba(232,163,61,0.35)',
+              boxShadow: '0 8px 24px var(--accent-glow)',
             }}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4 12h7" stroke="#0F172A" strokeWidth="2.5" strokeLinecap="round"/>
+              <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M4 12h7" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round"/>
             </svg>
           </div>
           <h1
@@ -243,8 +243,8 @@ export const AuthView = () => {
               marginBottom: 18,
               padding: '12px 14px',
               borderRadius: 'var(--radius-md)',
-              background: 'rgba(232, 163, 61, 0.12)',
-              border: '1px solid rgba(232, 163, 61, 0.35)',
+              background: 'var(--accent-muted)',
+              border: '1px solid var(--accent-border)',
               display: 'flex',
               alignItems: 'flex-start',
               gap: 10,
@@ -253,7 +253,7 @@ export const AuthView = () => {
               lineHeight: 1.45,
             }}
           >
-            <AlertCircle size={18} color="#E8A33D" style={{ flexShrink: 0, marginTop: 1 }} />
+            <AlertCircle size={18} color="var(--accent)" style={{ flexShrink: 0, marginTop: 1 }} />
             <div>
               <strong>Firebase Setup Note:</strong> Environment variables (<code>VITE_FIREBASE_API_KEY</code>, etc.) are not yet defined.
               Check the <code>.env.example</code> file to connect your Firebase project.
@@ -275,7 +275,7 @@ export const AuthView = () => {
           <div
             style={{
               height: 4,
-              background: 'linear-gradient(90deg, #E8A33D, #34C77B, #6C8EF5)',
+              background: 'var(--accent)',
             }}
           />
 
@@ -587,8 +587,8 @@ export const AuthView = () => {
                   marginTop: 6,
                   height: 44,
                   borderRadius: 'var(--radius-md)',
-                  background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
-                  color: '#0F172A',
+                  background: 'var(--accent)',
+                  color: '#FFFFFF',
                   border: 'none',
                   fontFamily: 'var(--font-heading)',
                   fontSize: '0.9375rem',
@@ -599,7 +599,7 @@ export const AuthView = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 8,
-                  boxShadow: '0 4px 16px rgba(232,163,61,0.3)',
+                  boxShadow: '0 4px 16px var(--accent-glow)',
                   transition: 'all 0.15s ease',
                 }}
               >

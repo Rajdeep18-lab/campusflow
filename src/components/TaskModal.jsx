@@ -4,8 +4,8 @@ import { useApp } from '../context/AppContext';
 
 const PRIORITIES = [
   { level: 'High',   color: 'var(--color-danger)',  bg: 'var(--color-danger-bg)',  dot: 'var(--color-danger)'  },
-  { level: 'Medium', color: '#f59e0b',               bg: 'var(--color-warning-bg)', dot: '#f59e0b'              },
-  { level: 'Low',    color: 'var(--color-success)',  bg: 'var(--color-success-bg)', dot: 'var(--color-success)' },
+  { level: 'Medium', color: '#D97706',               bg: 'rgba(217,119,6,0.1)',    dot: '#D97706'              },
+  { level: 'Low',    color: 'var(--accent)',        bg: 'var(--accent-subtle)',    dot: 'var(--accent)'        },
 ];
 
 export const TaskModal = () => {
@@ -65,10 +65,10 @@ export const TaskModal = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 'var(--radius-md)',
-              background: 'rgba(59,130,246,0.1)',
+              background: 'var(--accent-subtle)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <CheckSquare size={17} color="#3b82f6" strokeWidth={2} />
+              <CheckSquare size={17} color="var(--accent)" strokeWidth={2} />
             </div>
             <div>
               <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>

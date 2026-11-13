@@ -2,8 +2,8 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 
 const sizeMap = {
-  sm: { box: 30, text: '0.75rem', font: 600, border: 2 },
-  md: { box: 36, text: '0.875rem', font: 700, border: 2 },
+  sm: { box: 32, text: '0.75rem', font: 700, border: 2 },
+  md: { box: 38, text: '0.875rem', font: 700, border: 2 },
   lg: { box: 56, text: '1.25rem', font: 700, border: 2 },
   xl: { box: 80, text: '2rem', font: 800, border: 2.5 },
 };
@@ -41,15 +41,16 @@ export const UserAvatar = ({ size = 'md', className = '' }) => {
         width: s.box,
         height: s.box,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, #E8A33D, #d9922c)',
+        background: 'var(--accent)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#0F172A',
+        color: '#FFFFFF',
         fontFamily: 'var(--font-heading)',
         fontSize: s.text,
         fontWeight: s.font,
-        border: `${s.border}px solid rgba(232, 163, 61, 0.4)`,
+        border: `${s.border}px solid var(--accent-border)`,
+        boxShadow: '0 2px 6px var(--accent-glow)',
         userSelect: 'none',
         flexShrink: 0,
         letterSpacing: '-0.01em',
