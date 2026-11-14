@@ -18,3 +18,4 @@ export const getCategoryColor = (categoryId, theme = 'light') => {
                 CATEGORIES[8];
   return theme === 'dark' ? match.dark : match.light;
 };
+
