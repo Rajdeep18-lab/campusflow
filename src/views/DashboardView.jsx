@@ -118,7 +118,7 @@ export const DashboardView = () => {
             color: 'var(--text)',
             lineHeight: 1.25,
           }}>
-            {getGreeting()}, {displayName}
+            {getGreeting()}
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
             {dateFormatted}
