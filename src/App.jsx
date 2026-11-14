@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { BottomNav } from './components/BottomNav';
+import { MobileMoreDrawer } from './components/MobileMoreDrawer';
 import { OnboardingModal } from './components/OnboardingModal';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { QuickAddExpenseModal } from './components/QuickAddExpenseModal';
@@ -54,6 +55,7 @@ const MainContent = () => {
 
       {/* Mobile Bottom Navigation (<768px) */}
       <BottomNav />
+      <MobileMoreDrawer />
 
       {/* Overlays & Modals */}
       <OnboardingModal />

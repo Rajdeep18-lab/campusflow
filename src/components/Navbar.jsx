@@ -10,6 +10,7 @@ export const Navbar = () => {
     setIsGlobalSearchOpen,
     activePage,
     setActivePage,
+    setIsMobileMoreOpen,
   } = useApp();
 
   const { currentUser } = useAuth();
@@ -24,7 +25,10 @@ export const Navbar = () => {
       {/* Mobile brand (<= 768px) */}
       <div
         className="mobile-only-flex items-center gap-2 cursor-pointer"
-        onClick={() => setActivePage('dashboard')}
+        onClick={() => {
+          setActivePage('dashboard');
+          setIsMobileMoreOpen(false);
+        }}
         style={{ minWidth: 0, flexShrink: 0 }}
       >
         <div className="sidebar-logo-icon" style={{ width: 26, height: 26, fontSize: 13, flexShrink: 0 }}>
@@ -77,7 +81,10 @@ export const Navbar = () => {
         {/* Mobile Avatar (<= 768px) - Clicking navigates to Profile */}
         <button
           type="button"
-          onClick={() => setActivePage('profile')}
+          onClick={() => {
+            setActivePage('profile');
+            setIsMobileMoreOpen(false);
+          }}
           className="mobile-only-flex"
           title="Profile & Account Settings"
           aria-label="Profile and account settings"

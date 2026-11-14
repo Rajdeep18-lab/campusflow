@@ -207,6 +207,7 @@ export const AppProvider = ({ children }) => {
   // UI & Navigation States
   const [activePage, setActivePage] = useState('dashboard');
   const [toastMessage, setToastMessage] = useState(null);
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
 
   // Notification permission state
   const [notifPermission, setNotifPermission] = useState(() => getNotifPermission());
@@ -728,6 +729,8 @@ export const AppProvider = ({ children }) => {
 
         activePage,
         setActivePage,
+        isMobileMoreOpen,
+        setIsMobileMoreOpen,
 
         toastMessage,
         showToast,
