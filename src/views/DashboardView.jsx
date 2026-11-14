@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { getCategoryColor } from '../utils/categoryColors';
 
 export const DashboardView = () => {
   const {
@@ -16,6 +17,9 @@ export const DashboardView = () => {
     setIsTaskModalOpen,
     setActivePage,
     toggleTodoCompleted,
+    formatCurrency,
+    formatDate,
+    customCategories,
     profile,
   } = useApp();
 
@@ -165,8 +169,8 @@ export const DashboardView = () => {
         {/* Cell 1: Spent today */}
         <div className="summary-cell">
           <div className="summary-label">Spent today</div>
-          <div className="summary-number">
-            ₹{todayExpensesTotal.toLocaleString('en-IN')}
+          <div className="summary-number num">
+            {formatCurrency(todayExpensesTotal)}
           </div>
           <div className="summary-hint">
             {todayTransactions.length} transaction{todayTransactions.length !== 1 ? 's' : ''}
@@ -176,15 +180,15 @@ export const DashboardView = () => {
         {/* Cell 2: Budget remaining */}
         <div className="summary-cell">
           <div className="summary-label">Budget remaining</div>
-          <div className="summary-number">
-            ₹{remainingBudget > 0 ? remainingBudget.toLocaleString('en-IN') : (monthlyBudget > 0 ? 0 : '—')}
+          <div className="summary-number num">
+            {remainingBudget > 0 ? formatCurrency(remainingBudget) : (monthlyBudget > 0 ? formatCurrency(0) : '—')}
           </div>
           {monthlyBudget > 0 && (
             <div style={{
               width: '100%',
               height: 4,
               borderRadius: 2,
-              background: 'var(--surface-2)',
+              background: 'var(--border)',
               margin: '6px 0 2px',
               overflow: 'hidden',
             }}>
@@ -192,14 +196,14 @@ export const DashboardView = () => {
                 height: '100%',
                 borderRadius: 2,
                 width: `${Math.min(budgetUsagePercent, 100)}%`,
-                background: 'var(--accent-solid)',
+                background: 'var(--accent)',
                 transition: 'width 0.4s ease',
               }} />
             </div>
           )}
           <div className="summary-hint">
             {monthlyBudget > 0
-              ? `₹${monthSpent.toLocaleString('en-IN')} of ₹${monthlyBudget.toLocaleString('en-IN')} used`
+              ? `${formatCurrency(monthSpent)} of ${formatCurrency(monthlyBudget)} used`
               : 'Set monthly budget in Settings'}
           </div>
         </div>
@@ -326,42 +330,46 @@ export const DashboardView = () => {
               </div>
             ) : (
               <div>
-                {recentTransactions.map((exp, idx) => (
-                  <div
-                    key={exp.id || idx}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '10px 0',
-                      borderBottom: idx < recentTransactions.length - 1 ? '1px solid var(--border-subtle)' : 'none',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>
-                        {exp.title}
+                {recentTransactions.map((exp, idx) => {
+                  const catColor = getCategoryColor(exp.category, profile?.theme === 'dark' ? 'dark' : 'light', customCategories);
+                  return (
+                    <div
+                      key={exp.id || idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 0',
+                        borderBottom: idx < recentTransactions.length - 1 ? '1px solid var(--border)' : 'none',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: 2, background: catColor, flexShrink: 0 }} />
+                        <div>
+                          <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                            {exp.title}
+                          </div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                            {exp.category} · {exp.paymentMethod || 'UPI'}
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-                        {exp.category}
-                      </div>
-                    </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: 'var(--text)',
-                        fontFeatureSettings: '"tnum" 1',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}>
-                        −₹{Number(exp.amount || 0).toLocaleString('en-IN')}
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-                        {exp.date === todayStr ? 'Today' : exp.date}
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{
+                          fontSize: '0.8125rem',
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                        }} className="num">
+                          −{formatCurrency(exp.amount)}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }} className="num">
+                          {exp.date === todayStr ? 'Today' : formatDate(exp.date)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

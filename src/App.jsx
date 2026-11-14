@@ -9,6 +9,7 @@ import { GlobalSearchModal } from './components/GlobalSearchModal';
 import { QuickAddExpenseModal } from './components/QuickAddExpenseModal';
 import { TaskModal } from './components/TaskModal';
 import { BudgetModal } from './components/BudgetModal';
+import { DownloadReportModal } from './components/DownloadReportModal';
 import { Toast } from './components/Toast';
 import { PWAInstallBanner } from './components/PWAInstallBanner';
 import { PWAUpdater, PWAOfflineIndicator } from './components/PWAStatus';
@@ -19,6 +20,7 @@ import { TodoView } from './views/TodoView';
 import { AnalyticsView } from './views/AnalyticsView';
 import { CalendarView } from './views/CalendarView';
 import { SettingsView } from './views/SettingsView';
+import { ProfileView } from './views/ProfileView';
 import { AuthView } from './views/AuthView';
 
 const MainContent = () => {
@@ -32,6 +34,7 @@ const MainContent = () => {
       case 'analytics': return <AnalyticsView />;
       case 'calendar':  return <CalendarView />;
       case 'settings':  return <SettingsView />;
+      case 'profile':   return <ProfileView />;
       default:          return <DashboardView />;
     }
   };
@@ -58,6 +61,7 @@ const MainContent = () => {
       <QuickAddExpenseModal />
       <TaskModal />
       <BudgetModal />
+      <DownloadReportModal />
       <Toast />
 
       {/* PWA Components */}

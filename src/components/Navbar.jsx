@@ -15,6 +15,7 @@ export const Navbar = () => {
   const isDark = profile?.theme === 'dark';
   const displayName = profile?.name || currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'Rajdeep');
   const initial = (displayName.charAt(0) || 'R').toUpperCase();
+  const avatarUrl = profile?.avatarUrl || currentUser?.photoURL;
 
   return (
     <header className="app-navbar">
@@ -26,7 +27,7 @@ export const Navbar = () => {
         <div className="sidebar-logo-icon" style={{ width: 26, height: 26, fontSize: 13 }}>
           C
         </div>
-        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
           CampusFlow
         </span>
       </div>
@@ -37,7 +38,7 @@ export const Navbar = () => {
         className="nav-search-btn hidden md:flex"
         title="Search expenses, tasks (Ctrl+K)"
       >
-        <Search size={14} color="var(--text-muted)" strokeWidth={1.75} />
+        <Search size={14} color="var(--text-secondary)" strokeWidth={1.75} />
         <span>Search</span>
         <span className="kbd-badge">Ctrl K</span>
       </button>
@@ -68,16 +69,20 @@ export const Navbar = () => {
           )}
         </button>
 
-        {/* Mobile Avatar (<= 768px) - Clicking navigates to Settings */}
+        {/* Mobile Avatar (<= 768px) - Clicking navigates to Profile */}
         <div
           className="sidebar-avatar-circle md:hidden"
-          onClick={() => setActivePage('settings')}
-          style={{ cursor: 'pointer' }}
-          title="Settings"
+          onClick={() => setActivePage('profile')}
+          style={{ cursor: 'pointer', overflow: 'hidden' }}
+          title="Profile & Account"
           role="button"
           tabIndex={0}
         >
-          {initial}
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            initial
+          )}
         </div>
       </div>
     </header>

@@ -5,6 +5,7 @@ import {
   checkAndNotify,
   startNotifScheduler,
   stopNotifScheduler,
+  checkBudgetAndNotify,
 } from '../services/NotificationService';
 import { useAuth } from './AuthContext';
 import { migrateLocalDataToFirestore } from '../firebase/firestore';
@@ -18,6 +19,29 @@ const defaultProfile = {
   isOnboarded: false,
 };
 
+export const defaultPreferences = {
+  currency: 'INR',
+  dateFormat: 'DD/MM/YYYY',
+  firstDayOfWeek: 'Monday',
+  defaultCategory: 'Food',
+  defaultPaymentMethod: 'UPI',
+  expenseConfirmation: true,
+  notifBudgetLimit: true,
+  notifExpenseReminders: true,
+  notifTaskReminders: true,
+  themeMode: 'dark', // 'light' | 'dark' | 'system'
+};
+
+export const CURRENCY_SYMBOLS = {
+  INR: '₹',
+  USD: '$',
+  EUR: '€',
+  GBP: '£',
+  JPY: '¥',
+  CAD: 'C$',
+  AUD: 'A$',
+};
+
 // Helper to get storage keys based on user UID
 const getUserStorageKeys = (uid) => {
   if (!uid) {
@@ -26,6 +50,8 @@ const getUserStorageKeys = (uid) => {
       expenses: 'campusflow_expenses_v2',
       budget: 'campusflow_budget_v2',
       todos: 'campusflow_todos_v2',
+      categories: 'campusflow_categories_v2',
+      preferences: 'campusflow_preferences_v2',
       migrated: 'campusflow_migrated_v2',
     };
   }
@@ -34,12 +60,14 @@ const getUserStorageKeys = (uid) => {
     expenses: `campusflow_${uid}_expenses`,
     budget: `campusflow_${uid}_budget`,
     todos: `campusflow_${uid}_todos`,
+    categories: `campusflow_${uid}_categories`,
+    preferences: `campusflow_${uid}_preferences`,
     migrated: `campusflow_${uid}_migrated`,
   };
 };
 
 export const AppProvider = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, updateUserProfile } = useAuth();
   const currentUid = currentUser?.uid || null;
 
   // Initial load helper
@@ -49,14 +77,14 @@ export const AppProvider = ({ children }) => {
     let loadedExpenses = [];
     let loadedBudget = 0;
     let loadedTodos = [];
+    let loadedCategories = [];
+    let loadedPreferences = { ...defaultPreferences };
 
     try {
-      // Check if migration is needed for this user
       if (uid) {
         const isAlreadyMigrated = localStorage.getItem(keys.migrated);
         const userHasExistingData = localStorage.getItem(keys.expenses);
 
-        // If not migrated and user has no scoped data yet, check for legacy data
         if (!isAlreadyMigrated && !userHasExistingData) {
           const legacyProfileStr = localStorage.getItem('campusflow_profile_v2');
           const legacyExpensesStr = localStorage.getItem('campusflow_expenses_v2');
@@ -76,19 +104,19 @@ export const AppProvider = ({ children }) => {
             try { loadedTodos = JSON.parse(legacyTodosStr); } catch { /* ignore */ }
           }
 
-          // If user displayName exists from auth, populate it
           if (!loadedProfile.name && currentUser?.displayName) {
             loadedProfile.name = currentUser.displayName;
           }
+          if (!loadedProfile.avatarUrl && currentUser?.photoURL) {
+            loadedProfile.avatarUrl = currentUser.photoURL;
+          }
 
-          // Copy into scoped storage for this user (PRESERVING legacy storage as requested)
           localStorage.setItem(keys.profile, JSON.stringify(loadedProfile));
           localStorage.setItem(keys.expenses, JSON.stringify(loadedExpenses));
           localStorage.setItem(keys.budget, JSON.stringify(loadedBudget));
           localStorage.setItem(keys.todos, JSON.stringify(loadedTodos));
           localStorage.setItem(keys.migrated, 'true');
 
-          // Trigger background migration to Cloud Firestore if available
           migrateLocalDataToFirestore(uid, {
             profile: loadedProfile,
             expenses: loadedExpenses,
@@ -96,7 +124,14 @@ export const AppProvider = ({ children }) => {
             todos: loadedTodos,
           }).catch(err => console.warn('[CampusFlow] Background Firestore migration note:', err));
 
-          return { profile: loadedProfile, expenses: loadedExpenses, budget: loadedBudget, todos: loadedTodos };
+          return {
+            profile: loadedProfile,
+            expenses: loadedExpenses,
+            budget: loadedBudget,
+            todos: loadedTodos,
+            categories: loadedCategories,
+            preferences: loadedPreferences,
+          };
         }
       }
 
@@ -106,6 +141,9 @@ export const AppProvider = ({ children }) => {
         loadedProfile = { ...defaultProfile, ...JSON.parse(savedProfile) };
       } else if (currentUser?.displayName) {
         loadedProfile.name = currentUser.displayName;
+      }
+      if (currentUser?.photoURL && !loadedProfile.avatarUrl) {
+        loadedProfile.avatarUrl = currentUser.photoURL;
       }
 
       const savedExpenses = localStorage.getItem(keys.expenses);
@@ -122,11 +160,28 @@ export const AppProvider = ({ children }) => {
       if (savedTodos) {
         loadedTodos = JSON.parse(savedTodos);
       }
+
+      const savedCategories = localStorage.getItem(keys.categories);
+      if (savedCategories) {
+        loadedCategories = JSON.parse(savedCategories);
+      }
+
+      const savedPreferences = localStorage.getItem(keys.preferences);
+      if (savedPreferences) {
+        loadedPreferences = { ...defaultPreferences, ...JSON.parse(savedPreferences) };
+      }
     } catch (e) {
       console.error('[CampusFlow] Failed to load data from storage:', e);
     }
 
-    return { profile: loadedProfile, expenses: loadedExpenses, budget: loadedBudget, todos: loadedTodos };
+    return {
+      profile: loadedProfile,
+      expenses: loadedExpenses,
+      budget: loadedBudget,
+      todos: loadedTodos,
+      categories: loadedCategories,
+      preferences: loadedPreferences,
+    };
   }, [currentUser]);
 
   const initialData = loadInitialData(currentUid);
@@ -135,14 +190,18 @@ export const AppProvider = ({ children }) => {
   const [expenses, setExpenses] = useState(initialData.expenses);
   const [monthlyBudget, setMonthlyBudget] = useState(initialData.budget);
   const [todos, setTodos] = useState(initialData.todos);
+  const [customCategories, setCustomCategories] = useState(initialData.categories);
+  const [preferences, setPreferences] = useState(initialData.preferences);
 
-  // When authenticated user changes (login, logout, switch account), reload data safely
+  // When authenticated user changes, reload data
   useEffect(() => {
     const data = loadInitialData(currentUid);
     setProfile(data.profile);
     setExpenses(data.expenses);
     setMonthlyBudget(data.budget);
     setTodos(data.todos);
+    setCustomCategories(data.categories);
+    setPreferences(data.preferences);
   }, [currentUid, loadInitialData]);
 
   // UI & Navigation States
@@ -155,19 +214,39 @@ export const AppProvider = ({ children }) => {
   // Modal States
   const [isQuickAddExpenseOpen, setIsQuickAddExpenseOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
-  
+
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
 
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  // Theme Resolution: Support Light, Dark, or System
+  useEffect(() => {
+    const mode = preferences.themeMode || profile.theme || 'dark';
+
+    const applyTheme = (themeName) => {
+      document.documentElement.setAttribute('data-theme', themeName);
+    };
+
+    if (mode === 'system') {
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(media.matches ? 'dark' : 'light');
+
+      const listener = (e) => applyTheme(e.matches ? 'dark' : 'light');
+      media.addEventListener('change', listener);
+      return () => media.removeEventListener('change', listener);
+    } else {
+      applyTheme(mode);
+    }
+  }, [preferences.themeMode, profile.theme]);
 
   // Synchronize to LocalStorage using user-scoped keys
   useEffect(() => {
     const keys = getUserStorageKeys(currentUid);
     try {
       localStorage.setItem(keys.profile, JSON.stringify(profile));
-      document.documentElement.setAttribute('data-theme', profile.theme || 'dark');
     } catch (e) {
       console.error('Failed to save profile', e);
     }
@@ -200,10 +279,52 @@ export const AppProvider = ({ children }) => {
     }
   }, [todos, currentUid]);
 
+  useEffect(() => {
+    const keys = getUserStorageKeys(currentUid);
+    try {
+      localStorage.setItem(keys.categories, JSON.stringify(customCategories));
+    } catch (e) {
+      console.error('Failed to save custom categories', e);
+    }
+  }, [customCategories, currentUid]);
+
+  useEffect(() => {
+    const keys = getUserStorageKeys(currentUid);
+    try {
+      localStorage.setItem(keys.preferences, JSON.stringify(preferences));
+    } catch (e) {
+      console.error('Failed to save preferences', e);
+    }
+  }, [preferences, currentUid]);
+
   // Toast Helper
   const showToast = (message, type = 'success') => {
     setToastMessage({ message, type, id: Date.now() });
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // ── Currency and Date Formatting Helpers ──
+  const currencySymbol = CURRENCY_SYMBOLS[preferences.currency] || '₹';
+
+  const formatCurrency = (amount) => {
+    const num = Number(amount) || 0;
+    return `${currencySymbol}${num.toLocaleString('en-IN')}`;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const parts = dateString.split('-');
+      if (parts.length === 3) {
+        const [year, month, day] = parts;
+        if (preferences.dateFormat === 'MM/DD/YYYY') return `${month}/${day}/${year}`;
+        if (preferences.dateFormat === 'YYYY-MM-DD') return `${year}-${month}-${day}`;
+        return `${day}/${month}/${year}`;
+      }
+      return dateString;
+    } catch {
+      return dateString;
+    }
   };
 
   // ── Notification helpers ──
@@ -217,35 +338,43 @@ export const AppProvider = ({ children }) => {
     } catch { /* ignore */ }
   }, []);
 
-  // Start / restart scheduler whenever permission changes
+  const goToExpenses = useCallback(() => {
+    try {
+      setActivePage('expenses');
+      if (typeof window !== 'undefined') window.focus();
+    } catch { /* ignore */ }
+  }, []);
+
+  // Scheduler for notifications
   useEffect(() => {
     try {
       if (notifPermission === 'granted') {
-        startNotifScheduler(() => todosRef.current, goToTodos);
+        startNotifScheduler(
+          () => todosRef.current,
+          goToTodos,
+          preferences.notifTaskReminders
+        );
       } else {
         stopNotifScheduler();
       }
     } catch { /* ignore */ }
     return () => { try { stopNotifScheduler(); } catch { /* ignore */ } };
-  }, [notifPermission, goToTodos]);
+  }, [notifPermission, goToTodos, preferences.notifTaskReminders]);
 
-  // Also re-check notifications immediately whenever todos change
+  // Check budget limit alert
   useEffect(() => {
-    try {
-      if (notifPermission === 'granted') {
-        checkAndNotify(todos, goToTodos);
-      }
-    } catch { /* ignore */ }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todos]);
+    if (notifPermission === 'granted' && preferences.notifBudgetLimit && monthlyBudget > 0) {
+      checkBudgetAndNotify(monthlyExpensesTotal, monthlyBudget, goToExpenses);
+    }
+  }, [monthlyBudget, expenses, notifPermission, preferences.notifBudgetLimit, goToExpenses]);
 
   const requestNotifications = async () => {
     try {
       const result = await requestNotifPermission();
       setNotifPermission(result);
       if (result === 'granted') {
-        showToast("🔔 Notifications enabled! You'll get task reminders.", 'success');
-        checkAndNotify(todos, goToTodos);
+        showToast("Notifications enabled! You'll receive budget and task alerts.", 'success');
+        if (preferences.notifTaskReminders) checkAndNotify(todos, goToTodos);
       } else if (result === 'denied') {
         showToast('Notifications blocked. Enable them in browser settings.', 'danger');
       }
@@ -260,11 +389,11 @@ export const AppProvider = ({ children }) => {
     const hour = new Date().getHours();
     const displayName = profile.name || currentUser?.displayName || 'Student';
     if (hour >= 5 && hour < 12) {
-      return `Good Morning, ${displayName} 👋`;
+      return `Good morning, ${displayName}`;
     } else if (hour >= 12 && hour < 17) {
-      return `Good Afternoon, ${displayName} 👋`;
+      return `Good afternoon, ${displayName}`;
     } else {
-      return `Good Evening, ${displayName} 👋`;
+      return `Good evening, ${displayName}`;
     }
   };
 
@@ -277,43 +406,47 @@ export const AppProvider = ({ children }) => {
       name: trimmed,
       isOnboarded: true,
     }));
-    showToast(`Welcome to CampusFlow, ${trimmed}! 🎉`);
+    showToast(`Welcome to CampusFlow, ${trimmed}!`);
   };
 
-  // Expense Handlers
+  // ── Expense Handlers ──
   const addExpense = (newExp) => {
     const amountNum = parseFloat(newExp.amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      showToast('Please enter a valid expense amount (> ₹0)', 'danger');
+      showToast('Please enter a valid expense amount (> 0)', 'danger');
       return false;
     }
     const item = {
       id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       title: newExp.title.trim(),
       amount: amountNum,
-      category: newExp.category || 'Others',
+      category: newExp.category || preferences.defaultCategory || 'Food',
+      paymentMethod: newExp.paymentMethod || preferences.defaultPaymentMethod || 'UPI',
       date: newExp.date || new Date().toISOString().split('T')[0],
       notes: newExp.notes ? newExp.notes.trim() : '',
       createdAt: new Date().toISOString(),
     };
     setExpenses(prev => [item, ...prev]);
-    showToast(`Expense "${item.title}" added (₹${item.amount.toLocaleString('en-IN')})`);
+    if (preferences.expenseConfirmation) {
+      showToast(`Expense "${item.title}" added (${formatCurrency(item.amount)})`);
+    }
     return true;
   };
 
   const editExpense = (id, fields) => {
     const amountNum = parseFloat(fields.amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      showToast('Please enter a valid expense amount (> ₹0)', 'danger');
+      showToast('Please enter a valid expense amount (> 0)', 'danger');
       return false;
     }
     setExpenses(prev => prev.map(e => e.id === id ? {
       ...e,
       title: fields.title.trim(),
       amount: amountNum,
-      category: fields.category || 'Others',
+      category: fields.category || e.category || 'Food',
+      paymentMethod: fields.paymentMethod || e.paymentMethod || 'UPI',
       date: fields.date || e.date,
-      notes: fields.notes ? fields.notes.trim() : '',
+      notes: fields.notes !== undefined ? fields.notes.trim() : (e.notes || ''),
     } : e));
     showToast('Expense updated successfully!');
     return true;
@@ -338,7 +471,36 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // Task / To-Do Handlers
+  // ── Custom Category Handlers ──
+  const addCustomCategory = ({ name, iconName = 'Tag', light = '#1F4D3A', dark = '#5FA37F' }) => {
+    const trimmed = (name || '').trim();
+    if (!trimmed) {
+      showToast('Category name is required', 'danger');
+      return false;
+    }
+    const exists = customCategories.some(c => c.label.toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      showToast('A category with this name already exists', 'danger');
+      return false;
+    }
+    const newCat = {
+      id: `custom-${Date.now()}`,
+      label: trimmed,
+      iconName,
+      light,
+      dark,
+    };
+    setCustomCategories(prev => [...prev, newCat]);
+    showToast(`Category "${trimmed}" created!`);
+    return newCat;
+  };
+
+  const deleteCustomCategory = (id) => {
+    setCustomCategories(prev => prev.filter(c => c.id !== id));
+    showToast('Custom category removed', 'info');
+  };
+
+  // ── Task Handlers ──
   const addTodo = (newTodo) => {
     if (!newTodo.title || !newTodo.title.trim()) {
       showToast('Task title is required', 'danger');
@@ -376,7 +538,7 @@ export const AppProvider = ({ children }) => {
     setTodos(prev => prev.map(t => {
       if (t.id === id) {
         const nextState = !t.completed;
-        showToast(nextState ? 'Task completed! 🎯' : 'Task marked as pending', nextState ? 'success' : 'info');
+        showToast(nextState ? 'Task completed' : 'Task pending', nextState ? 'success' : 'info');
         return { ...t, completed: nextState };
       }
       return t;
@@ -388,7 +550,7 @@ export const AppProvider = ({ children }) => {
     showToast('Task deleted', 'info');
   };
 
-  // Budget Handlers
+  // ── Budget Handlers ──
   const saveMonthlyBudget = (amount) => {
     const val = parseFloat(amount);
     if (isNaN(val) || val < 0) {
@@ -396,34 +558,53 @@ export const AppProvider = ({ children }) => {
       return false;
     }
     setMonthlyBudget(val);
-    showToast(`Monthly budget set to ₹${val.toLocaleString('en-IN')}`);
+    showToast(`Monthly budget set to ${formatCurrency(val)}`);
     return true;
   };
 
-  // Profile & Theme Handlers
-  const updateProfile = (fields) => {
+  // ── Profile & Theme Handlers ──
+  const updateProfile = async (fields) => {
     setProfile(prev => ({ ...prev, ...fields }));
+    if (currentUser && (fields.name || fields.avatarUrl)) {
+      try {
+        await updateUserProfile?.({
+          displayName: fields.name,
+          photoURL: fields.avatarUrl,
+        });
+      } catch (e) {
+        console.warn('Firebase profile sync notice:', e);
+      }
+    }
     showToast('Profile updated!');
   };
 
-  const toggleTheme = () => {
-    setProfile(prev => {
-      const next = prev.theme === 'dark' ? 'light' : 'dark';
-      showToast(`Switched to ${next === 'dark' ? 'Dark' : 'Light'} theme`, 'info');
-      return { ...prev, theme: next };
-    });
+  const updatePreferences = (newPrefs) => {
+    setPreferences(prev => ({ ...prev, ...newPrefs }));
+    showToast('Preferences saved');
   };
 
-  // Backup & Restore Handlers
+  const toggleTheme = () => {
+    setPreferences(prev => {
+      const current = prev.themeMode === 'system' ? profile.theme : prev.themeMode;
+      const next = current === 'dark' ? 'light' : 'dark';
+      showToast(`Switched to ${next === 'dark' ? 'Dark' : 'Light'} theme`, 'info');
+      return { ...prev, themeMode: next };
+    });
+    setProfile(prev => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }));
+  };
+
+  // ── Backup & Restore Handlers ──
   const exportDataAsJSON = () => {
     try {
       const backupData = {
         app: 'CampusFlow',
-        version: '2.0.0',
+        version: '2.1.0',
         userId: currentUid,
         userEmail: currentUser?.email || null,
         exportDate: new Date().toISOString(),
         profile,
+        preferences,
+        customCategories,
         expenses,
         monthlyBudget,
         todos,
@@ -450,6 +631,8 @@ export const AppProvider = ({ children }) => {
         throw new Error('Invalid JSON format');
       }
       if (parsed.profile) setProfile(parsed.profile);
+      if (parsed.preferences) setPreferences(prev => ({ ...prev, ...parsed.preferences }));
+      if (Array.isArray(parsed.customCategories)) setCustomCategories(parsed.customCategories);
       if (Array.isArray(parsed.expenses)) setExpenses(parsed.expenses);
       if (typeof parsed.monthlyBudget === 'number') setMonthlyBudget(parsed.monthlyBudget);
       if (Array.isArray(parsed.todos)) setTodos(parsed.todos);
@@ -468,6 +651,8 @@ export const AppProvider = ({ children }) => {
       localStorage.removeItem(keys.expenses);
       localStorage.removeItem(keys.budget);
       localStorage.removeItem(keys.todos);
+      localStorage.removeItem(keys.categories);
+      localStorage.removeItem(keys.preferences);
     } catch (e) {
       console.error(e);
     }
@@ -475,8 +660,10 @@ export const AppProvider = ({ children }) => {
     setExpenses([]);
     setMonthlyBudget(0);
     setTodos([]);
+    setCustomCategories([]);
+    setPreferences(defaultPreferences);
     setActivePage('dashboard');
-    showToast('Your user data has been cleared. Fresh start initialized.', 'info');
+    showToast('Your user data has been reset.', 'info');
   };
 
   // Dynamic Calculations
@@ -485,13 +672,13 @@ export const AppProvider = ({ children }) => {
 
   const todayExpensesTotal = expenses
     .filter(e => e.date === todayStr)
-    .reduce((sum, e) => sum + e.amount, 0);
+    .reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   const monthlyExpensesTotal = expenses
     .filter(e => e.date && e.date.startsWith(currentMonthStr))
-    .reduce((sum, e) => sum + e.amount, 0);
+    .reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
-  const totalExpensesAllTime = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalExpensesAllTime = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
 
   const remainingBudget = monthlyBudget > 0 ? monthlyBudget - monthlyExpensesTotal : 0;
   const budgetUsagePercent = monthlyBudget > 0 ? Math.min(Math.round((monthlyExpensesTotal / monthlyBudget) * 100), 100) : 0;
@@ -507,15 +694,25 @@ export const AppProvider = ({ children }) => {
       value={{
         profile,
         updateProfile,
+        preferences,
+        updatePreferences,
         completeOnboarding,
         getGreeting,
         toggleTheme,
+
+        currencySymbol,
+        formatCurrency,
+        formatDate,
 
         expenses,
         addExpense,
         editExpense,
         deleteExpense,
         duplicateExpense,
+
+        customCategories,
+        addCustomCategory,
+        deleteCustomCategory,
 
         monthlyBudget,
         saveMonthlyBudget,
@@ -548,6 +745,8 @@ export const AppProvider = ({ children }) => {
         setIsBudgetModalOpen,
         isGlobalSearchOpen,
         setIsGlobalSearchOpen,
+        isReportModalOpen,
+        setIsReportModalOpen,
 
         // Backup
         exportDataAsJSON,

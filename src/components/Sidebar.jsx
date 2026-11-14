@@ -6,6 +6,7 @@ import {
   CalendarDays,
   BarChart3,
   Settings,
+  User,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { id: 'todos',     label: 'Tasks',      icon: CheckSquare },
   { id: 'calendar',  label: 'Calendar',   icon: CalendarDays },
   { id: 'analytics', label: 'Analytics',  icon: BarChart3 },
+  { id: 'profile',   label: 'Profile',    icon: User },
   { id: 'settings',  label: 'Settings',   icon: Settings },
 ];
 
@@ -30,11 +32,12 @@ export const Sidebar = ({ closeMobileSidebar }) => {
 
   const displayName = profile?.name || currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'Rajdeep');
   const initial = (displayName.charAt(0) || 'R').toUpperCase();
+  const avatarUrl = profile?.avatarUrl || currentUser?.photoURL;
 
   return (
     <aside className="app-sidebar" aria-label="Main navigation">
       {/* Brand Logo */}
-      <div className="sidebar-logo">
+      <div className="sidebar-logo" onClick={() => handleNav('dashboard')} style={{ cursor: 'pointer' }}>
         <div className="sidebar-logo-icon">
           C
         </div>
@@ -72,13 +75,17 @@ export const Sidebar = ({ closeMobileSidebar }) => {
 
         <div
           className="sidebar-user-row"
-          onClick={() => handleNav('settings')}
-          title="Account & Settings"
+          onClick={() => handleNav('profile')}
+          title="View & Edit Profile"
           role="button"
           tabIndex={0}
         >
-          <div className="sidebar-avatar-circle">
-            {initial}
+          <div className="sidebar-avatar-circle" style={{ overflow: 'hidden' }}>
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              initial
+            )}
           </div>
           <span className="sidebar-user-name">
             {displayName}

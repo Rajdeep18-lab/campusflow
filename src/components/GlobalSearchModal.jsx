@@ -12,6 +12,9 @@ export const GlobalSearchModal = () => {
     setActivePage,
     setEditingExpense,
     toggleTodoCompleted,
+    formatCurrency,
+    formatDate,
+    customCategories,
     theme,
   } = useApp();
 
@@ -141,7 +144,7 @@ export const GlobalSearchModal = () => {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {filteredExpenses.map(exp => {
-                      const color = getCategoryColor(exp.category, theme);
+                      const color = getCategoryColor(exp.category, theme, customCategories);
                       return (
                         <div
                           key={exp.id}
@@ -171,12 +174,12 @@ export const GlobalSearchModal = () => {
                                 {exp.title}
                               </div>
                               <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
-                                {exp.category} · <span className="num">{exp.date}</span>
+                                {exp.category} · <span className="num">{formatDate(exp.date)}</span>
                               </div>
                             </div>
                           </div>
                           <span className="num" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginLeft: 12 }}>
-                            ₹{Number(exp.amount).toLocaleString('en-IN')}
+                            {formatCurrency(exp.amount)}
                           </span>
                         </div>
                       );

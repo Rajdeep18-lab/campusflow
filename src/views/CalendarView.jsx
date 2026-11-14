@@ -5,8 +5,8 @@ import {
   Plus,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { getCategoryColor } from '../utils/categoryColors';
 
-const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -19,14 +19,29 @@ export const CalendarView = () => {
     setIsQuickAddExpenseOpen,
     setIsTaskModalOpen,
     toggleTodoCompleted,
+    formatCurrency,
+    preferences,
+    customCategories,
+    profile,
   } = useApp();
+
+  const isMondayFirst = preferences?.firstDayOfWeek !== 'Sunday';
+  const DAYS_OF_WEEK = isMondayFirst
+    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDateStr, setSelectedDateStr] = useState(new Date().toISOString().split('T')[0]);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+  // Day offset calculation based on firstDayOfWeek
+  let firstDayIndex = new Date(year, month, 1).getDay(); // 0 is Sunday
+  if (isMondayFirst) {
+    firstDayIndex = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+  }
+
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -34,7 +49,7 @@ export const CalendarView = () => {
 
   // Month grid cells
   const calendarCells = [
-    ...Array(firstDayOfMonth).fill(null),
+    ...Array(firstDayIndex).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
@@ -64,51 +79,36 @@ export const CalendarView = () => {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{
-            fontSize: '22px',
+            fontSize: '1.375rem',
             fontWeight: 600,
             letterSpacing: '-0.02em',
-            color: 'var(--text)',
+            color: 'var(--text-primary)',
             lineHeight: 1.25,
+            margin: 0,
           }}>
             Calendar
           </h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
-            Deadlines and spending, day by day
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4, margin: 0 }}>
+            Deadlines and spending mapped across the month
           </p>
         </div>
 
-        {/* Header Right: Legend + Month Nav + Today */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+        {/* Legend + Navigation Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           {/* Legend */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '12px', color: 'var(--text-muted)' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{
-                fontSize: '11px',
-                padding: '1px 6px',
-                borderRadius: 4,
-                background: 'var(--accent-tint)',
-                color: 'var(--accent)',
-                fontWeight: 500,
-              }}>
-                Deadline
-              </span>
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--accent)' }} />
+              <span>Deadline</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#A06A15' }} />
               <span>Spending</span>
-            </span>
+            </div>
           </div>
 
           {/* Month switcher */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-control)',
-            padding: '2px 6px',
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <button
               onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
               className="btn-icon"
@@ -117,7 +117,7 @@ export const CalendarView = () => {
             >
               <ChevronLeft size={14} />
             </button>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', minWidth: 110, textAlign: 'center' }}>
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', minWidth: 110, textAlign: 'center' }}>
               {MONTH_NAMES[month]} {year}
             </span>
             <button
@@ -138,6 +138,7 @@ export const CalendarView = () => {
               setSelectedDateStr(t.toISOString().split('T')[0]);
             }}
             className="btn btn-secondary"
+            style={{ height: 32, padding: '0 12px', fontSize: '0.75rem' }}
           >
             Today
           </button>
@@ -163,7 +164,7 @@ export const CalendarView = () => {
             marginBottom: 8,
           }}>
             {DAYS_OF_WEEK.map(d => (
-              <div key={d} style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', padding: '4px 0' }}>
+              <div key={d} style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', padding: '4px 0' }}>
                 {d}
               </div>
             ))}
@@ -202,9 +203,9 @@ export const CalendarView = () => {
                     padding: '6px',
                     borderRadius: 'var(--radius-control)',
                     border: isSelected
-                      ? '2px solid var(--accent-solid)'
-                      : '1px solid var(--border-subtle)',
-                    background: isSelected ? 'var(--surface-2)' : 'var(--surface)',
+                      ? '2px solid var(--accent)'
+                      : '1px solid var(--border)',
+                    background: isSelected ? 'var(--accent-subtle)' : 'var(--bg-surface)',
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
@@ -219,12 +220,12 @@ export const CalendarView = () => {
                         width: 22,
                         height: 22,
                         borderRadius: '50%',
-                        background: 'var(--accent-solid)',
+                        background: 'var(--accent)',
                         color: '#FFFFFF',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '12px',
+                        fontSize: '0.75rem',
                         fontWeight: 600,
                         lineHeight: 1,
                       }}>
@@ -232,9 +233,9 @@ export const CalendarView = () => {
                       </span>
                     ) : (
                       <span style={{
-                        fontSize: '12px',
+                        fontSize: '0.75rem',
                         fontWeight: isSelected ? 600 : 500,
-                        color: 'var(--text)',
+                        color: 'var(--text-primary)',
                         paddingLeft: 2,
                       }}>
                         {day}
@@ -247,16 +248,12 @@ export const CalendarView = () => {
                         display: 'flex',
                         alignItems: 'center',
                         gap: 3,
-                        fontSize: '11px',
+                        fontSize: '0.6875rem',
                         fontWeight: 500,
                         color: '#A06A15',
-                        fontFeatureSettings: '"tnum" 1',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}>
+                      }} className="num">
                         <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#A06A15' }} />
-                        ₹{dayData.totalSpent >= 1000
-                          ? `${(dayData.totalSpent / 1000).toFixed(1)}k`
-                          : dayData.totalSpent}
+                        {formatCurrency(dayData.totalSpent)}
                       </span>
                     )}
                   </div>
@@ -267,11 +264,11 @@ export const CalendarView = () => {
                       <div
                         key={t.id}
                         style={{
-                          fontSize: '10px',
+                          fontSize: '0.625rem',
                           fontWeight: 500,
                           padding: '2px 4px',
                           borderRadius: 3,
-                          background: 'var(--accent-tint)',
+                          background: 'var(--accent-subtle)',
                           color: 'var(--accent)',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -283,7 +280,7 @@ export const CalendarView = () => {
                       </div>
                     ))}
                     {dayData.todos.length > 2 && (
-                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', paddingLeft: 2 }}>
+                      <div style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', paddingLeft: 2 }}>
                         +{dayData.todos.length - 2} more
                       </div>
                     )}
@@ -294,36 +291,34 @@ export const CalendarView = () => {
           </div>
         </div>
 
-        {/* Right Column: 300px Selected Day Details (Page 4 in PDF) */}
+        {/* Right Column: 300px Selected Day Details */}
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Header */}
           <div>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>
+            <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               {formatSelectedDateTitle(selectedDateStr)}
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
               {selectedDateStr === todayStr ? 'Today' : selectedDateStr}
             </div>
           </div>
 
           {/* Section: Spending */}
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 14 }}>
-            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', marginBottom: 4 }}>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 4 }}>
               Spending
             </div>
             <div style={{
-              fontSize: '20px',
+              fontSize: '1.25rem',
               fontWeight: 600,
-              color: 'var(--text)',
-              fontFeatureSettings: '"tnum" 1',
-              fontVariantNumeric: 'tabular-nums',
+              color: 'var(--text-primary)',
               marginBottom: 10,
-            }}>
-              ₹{selectedData.totalSpent.toLocaleString('en-IN')}
+            }} className="num">
+              {formatCurrency(selectedData.totalSpent)}
             </div>
 
             {selectedData.expenses.length === 0 ? (
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
                 No expenses recorded for this date.
               </div>
             ) : (
@@ -335,19 +330,18 @@ export const CalendarView = () => {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      fontSize: '12px',
+                      fontSize: '0.75rem',
                     }}
                   >
-                    <span style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8 }}>
-                      {exp.title} · <span style={{ color: 'var(--text-muted)' }}>{exp.category}</span>
+                    <span style={{ color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8 }}>
+                      {exp.title} · <span style={{ color: 'var(--text-secondary)' }}>{exp.category}</span>
                     </span>
                     <span style={{
                       fontWeight: 600,
-                      color: 'var(--text)',
-                      fontFeatureSettings: '"tnum" 1',
+                      color: 'var(--text-primary)',
                       flexShrink: 0,
-                    }}>
-                      ₹{Number(exp.amount || 0).toLocaleString('en-IN')}
+                    }} className="num">
+                      {formatCurrency(exp.amount)}
                     </span>
                   </div>
                 ))}
@@ -356,13 +350,13 @@ export const CalendarView = () => {
           </div>
 
           {/* Section: Due today */}
-          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 14 }}>
-            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', marginBottom: 8 }}>
+          <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 8 }}>
               Due {selectedDateStr === todayStr ? 'today' : 'on this date'}
             </div>
 
             {selectedData.todos.length === 0 ? (
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
                 No deadlines scheduled.
               </div>
             ) : (
@@ -374,7 +368,7 @@ export const CalendarView = () => {
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
-                      fontSize: '13px',
+                      fontSize: '0.8125rem',
                     }}
                   >
                     <input
@@ -386,12 +380,12 @@ export const CalendarView = () => {
                         height: 15,
                         borderRadius: 3,
                         cursor: 'pointer',
-                        accentColor: 'var(--accent-solid)',
+                        accentColor: 'var(--accent)',
                         flexShrink: 0,
                       }}
                     />
                     <span style={{
-                      color: todo.completed ? 'var(--text-muted)' : 'var(--text)',
+                      color: todo.completed ? 'var(--text-secondary)' : 'var(--text-primary)',
                       textDecoration: todo.completed ? 'line-through' : 'none',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -409,21 +403,21 @@ export const CalendarView = () => {
           <div style={{
             display: 'flex',
             gap: 8,
-            borderTop: '1px solid var(--border-subtle)',
+            borderTop: '1px solid var(--border)',
             paddingTop: 14,
             marginTop: 'auto',
           }}>
             <button
               onClick={() => setIsQuickAddExpenseOpen(true)}
               className="btn btn-secondary"
-              style={{ flex: 1, fontSize: '12px' }}
+              style={{ flex: 1, fontSize: '0.75rem' }}
             >
               Add expense
             </button>
             <button
               onClick={() => setIsTaskModalOpen(true)}
               className="btn btn-secondary"
-              style={{ flex: 1, fontSize: '12px' }}
+              style={{ flex: 1, fontSize: '0.75rem' }}
             >
               Add task
             </button>

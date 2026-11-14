@@ -4,68 +4,63 @@ import {
   Upload,
   X,
   LogOut,
+  FileText,
+  AlertTriangle,
+  User,
+  Shield,
+  Bell,
+  Sliders,
+  Globe,
+  Palette,
+  Check,
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useApp, defaultPreferences, CURRENCY_SYMBOLS } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
+import { CATEGORIES, PAYMENT_METHODS } from '../utils/categoryColors';
 
 export const SettingsView = () => {
   const {
     profile,
-    expenses,
-    monthlyBudget,
-    updateProfile,
-    toggleTheme,
+    preferences,
+    updatePreferences,
     exportDataAsJSON,
     importDataFromJSON,
     resetAllDataToDefaults,
-    saveMonthlyBudget,
+    setIsReportModalOpen,
     notifPermission,
     requestNotifications,
+    setActivePage,
     showToast,
   } = useApp();
 
-  const { currentUser, logout } = useAuth();
+  const {
+    currentUser,
+    logout,
+    resetPassword,
+    deleteUserAccount,
+  } = useAuth();
+
   const fileInputRef = useRef(null);
 
-  const [nameInput, setNameInput] = useState(profile?.name || '');
-  const [budgetInput, setBudgetInput] = useState(monthlyBudget > 0 ? String(monthlyBudget) : '');
-  const [hasUnsavedName, setHasUnsavedName] = useState(false);
+  // Clear data modal state
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 
-  const now = new Date();
-  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const monthExpenses = expenses.filter(e => e.date && e.date.startsWith(monthPrefix));
-  const monthSpent = monthExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  // Delete account modal state
+  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [deleteAccountText, setDeleteAccountText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState('');
 
-  const displayName = profile?.name || currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'Rajdeep');
-  const initial = (displayName.charAt(0) || 'R').toUpperCase();
-  const emailVal = currentUser?.email || 'rajdeep@college.edu';
-  const isDark = profile?.theme === 'dark';
+  // Reset password state
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
-  const handleNameChange = (e) => {
-    setNameInput(e.target.value);
-    setHasUnsavedName(e.target.value !== (profile?.name || ''));
-  };
+  const displayName = profile?.name || currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'Student');
+  const initial = (displayName.charAt(0) || 'S').toUpperCase();
+  const emailVal = currentUser?.email || 'student@campus.edu';
 
-  const handleSaveProfile = (e) => {
-    e.preventDefault();
-    if (nameInput.trim()) {
-      updateProfile({ name: nameInput.trim() });
-      setHasUnsavedName(false);
-      showToast?.('Profile updated successfully', 'success');
-    }
-  };
-
-  const handleSaveBudget = (e) => {
-    e.preventDefault();
-    const val = parseFloat(budgetInput);
-    if (!isNaN(val) && val >= 0) {
-      saveMonthlyBudget(val);
-      showToast?.('Budget limit saved', 'success');
-    }
-  };
-
+  // Handle Import JSON
   const handleJSONFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -78,339 +73,744 @@ export const SettingsView = () => {
     reader.readAsText(file);
   };
 
+  // Confirm Reset Data
   const handleConfirmClearAll = () => {
     if (deleteConfirmationText.trim().toUpperCase() === 'DELETE') {
       resetAllDataToDefaults();
       setIsClearModalOpen(false);
       setDeleteConfirmationText('');
-      showToast?.('All data has been reset', 'info');
+      showToast('All user data reset to fresh state', 'info');
+    }
+  };
+
+  // Confirm Delete Account
+  const handleConfirmDeleteAccount = async () => {
+    if (deleteAccountText.trim().toUpperCase() !== 'DELETE MY ACCOUNT') return;
+
+    try {
+      setIsDeletingAccount(true);
+      setDeleteAccountError('');
+      resetAllDataToDefaults();
+      await deleteUserAccount();
+      showToast('Your account and data have been deleted.', 'info');
+    } catch (err) {
+      setDeleteAccountError(err.message || 'Recent login required to delete account. Please sign out and log in again, then retry.');
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
+  // Handle Send Password Reset
+  const handleSendPasswordReset = async () => {
+    if (!currentUser?.email) return;
+    try {
+      setIsSendingReset(true);
+      await resetPassword(currentUser.email);
+      setResetSent(true);
+      showToast(`Password reset link sent to ${currentUser.email}`, 'success');
+    } catch (err) {
+      showToast(err.message || 'Failed to send reset email', 'danger');
+    } finally {
+      setIsSendingReset(false);
     }
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 720 }}>
       {/* ── Page Header ── */}
-      <div>
-        <h1 style={{
-          fontSize: '22px',
-          fontWeight: 600,
-          letterSpacing: '-0.02em',
-          color: 'var(--text)',
-          lineHeight: 1.25,
-        }}>
-          Settings
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
-          Manage your profile, appearance, budget and data.
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{
+            fontSize: '1.375rem',
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            color: 'var(--text-primary)',
+            lineHeight: 1.25,
+            margin: 0,
+          }}>
+            Settings & Preferences
+          </h1>
+          <p style={{
+            fontSize: '0.8125rem',
+            color: 'var(--text-secondary)',
+            marginTop: 4,
+            margin: 0,
+          }}>
+            Configure appearance, currencies, expense defaults, and data backups
+          </p>
+        </div>
+
+        <button
+          onClick={() => setActivePage('profile')}
+          className="btn btn-secondary"
+          style={{
+            height: 34,
+            padding: '0 14px',
+            borderRadius: 'var(--radius-control)',
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <User size={13} />
+          View Full Profile
+        </button>
+      </div>
+
+      {/* ── 1. Appearance ── */}
+      <section style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '20px 20px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Palette size={16} color="var(--accent)" />
+          <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Appearance & Theme
+          </h2>
+        </div>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 14px' }}>
+          Choose your visual mode or follow your system-level dark mode preference.
         </p>
-      </div>
 
-      {/* ── Card 1: Profile ── */}
-      <div className="card">
-        <div style={{ marginBottom: 14 }}>
-          <div className="card-title">Profile</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-            Your name is used in the greeting.
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 10,
+          maxWidth: 420,
+        }}>
+          {[
+            { id: 'light', label: 'Light' },
+            { id: 'dark', label: 'Dark' },
+            { id: 'system', label: 'System Default' },
+          ].map(opt => {
+            const isSelected = (preferences.themeMode || 'dark') === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => updatePreferences({ themeMode: opt.id })}
+                style={{
+                  height: 38,
+                  borderRadius: 'var(--radius-control)',
+                  border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                  background: isSelected ? 'var(--accent-subtle)' : 'var(--bg-canvas)',
+                  color: isSelected ? 'var(--accent)' : 'var(--text-primary)',
+                  fontSize: '0.8125rem',
+                  fontWeight: isSelected ? 600 : 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  transition: 'all 0.15s',
+                }}
+              >
+                {isSelected && <Check size={13} strokeWidth={2.5} />}
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── 2. Regional Preferences ── */}
+      <section style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '20px 20px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Globe size={16} color="var(--accent)" />
+          <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Regional Preferences
+          </h2>
+        </div>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>
+          Set your preferred display currency and calendar formatting. Existing amounts remain intact without currency conversion.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+          {/* Currency selection */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+              Display Currency
+            </label>
+            <select
+              value={preferences.currency || 'INR'}
+              onChange={e => updatePreferences({ currency: e.target.value })}
+              style={{
+                width: '100%',
+                height: 38,
+                padding: '0 10px',
+                borderRadius: 'var(--radius-control)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-canvas)',
+                color: 'var(--text-primary)',
+                fontSize: '0.8125rem',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="INR">INR (₹) — Indian Rupee</option>
+              <option value="USD">USD ($) — US Dollar</option>
+              <option value="EUR">EUR (€) — Euro</option>
+              <option value="GBP">GBP (£) — British Pound</option>
+              <option value="JPY">JPY (¥) — Japanese Yen</option>
+              <option value="CAD">CAD (C$) — Canadian Dollar</option>
+              <option value="AUD">AUD (A$) — Australian Dollar</option>
+            </select>
+          </div>
+
+          {/* Date format */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+              Date Format
+            </label>
+            <select
+              value={preferences.dateFormat || 'DD/MM/YYYY'}
+              onChange={e => updatePreferences({ dateFormat: e.target.value })}
+              style={{
+                width: '100%',
+                height: 38,
+                padding: '0 10px',
+                borderRadius: 'var(--radius-control)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-canvas)',
+                color: 'var(--text-primary)',
+                fontSize: '0.8125rem',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="DD/MM/YYYY">DD/MM/YYYY (14/11/2026)</option>
+              <option value="MM/DD/YYYY">MM/DD/YYYY (11/14/2026)</option>
+              <option value="YYYY-MM-DD">YYYY-MM-DD (2026-11-14)</option>
+            </select>
+          </div>
+
+          {/* First day of week */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+              First Day of Week
+            </label>
+            <select
+              value={preferences.firstDayOfWeek || 'Monday'}
+              onChange={e => updatePreferences({ firstDayOfWeek: e.target.value })}
+              style={{
+                width: '100%',
+                height: 38,
+                padding: '0 10px',
+                borderRadius: 'var(--radius-control)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-canvas)',
+                color: 'var(--text-primary)',
+                fontSize: '0.8125rem',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="Monday">Monday</option>
+              <option value="Sunday">Sunday</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. Expense Preferences ── */}
+      <section style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '20px 20px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Sliders size={16} color="var(--accent)" />
+          <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Expense Defaults
+          </h2>
+        </div>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>
+          Speed up logging by pre-selecting your most common category and payment method.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+          {/* Default Category */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+              Default Category
+            </label>
+            <select
+              value={preferences.defaultCategory || 'Food'}
+              onChange={e => updatePreferences({ defaultCategory: e.target.value })}
+              style={{
+                width: '100%',
+                height: 38,
+                padding: '0 10px',
+                borderRadius: 'var(--radius-control)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-canvas)',
+                color: 'var(--text-primary)',
+                fontSize: '0.8125rem',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {CATEGORIES.map(c => (
+                <option key={c.id} value={c.label}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Default Payment Method */}
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+              Default Payment Method
+            </label>
+            <select
+              value={preferences.defaultPaymentMethod || 'UPI'}
+              onChange={e => updatePreferences({ defaultPaymentMethod: e.target.value })}
+              style={{
+                width: '100%',
+                height: 38,
+                padding: '0 10px',
+                borderRadius: 'var(--radius-control)',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-canvas)',
+                color: 'var(--text-primary)',
+                fontSize: '0.8125rem',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              {PAYMENT_METHODS.map(pm => (
+                <option key={pm.id} value={pm.id}>{pm.label}</option>
+              ))}
+            </select>
           </div>
         </div>
 
-        <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Avatar circle + Name input */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-            <div
-              className="sidebar-avatar-circle"
-              style={{ width: 38, height: 38, fontSize: '15px', marginTop: 20 }}
-            >
-              {initial}
+        {/* Expense confirmation toast toggle */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 16,
+          paddingTop: 14,
+          borderTop: '1px solid var(--border)',
+        }}>
+          <div>
+            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+              Show confirmation after adding an expense
             </div>
-
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div className="form-group">
-                <label className="form-label">Name</label>
-                <input
-                  type="text"
-                  value={nameInput}
-                  onChange={handleNameChange}
-                  className="form-input"
-                  placeholder="Your full name"
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  value={emailVal}
-                  readOnly
-                  disabled
-                  className="form-input"
-                  style={{
-                    background: 'var(--surface-2)',
-                    color: 'var(--text-muted)',
-                    cursor: 'not-allowed',
-                  }}
-                />
-              </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+              Displays brief toast notification with the logged amount
             </div>
           </div>
+          <input
+            type="checkbox"
+            checked={preferences.expenseConfirmation ?? true}
+            onChange={e => updatePreferences({ expenseConfirmation: e.target.checked })}
+            style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
+          />
+        </div>
+      </section>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+      {/* ── 4. Notifications ── */}
+      <section style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '20px 20px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Bell size={16} color="var(--accent)" />
+            <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+              Notification Alerts
+            </h2>
+          </div>
+          {notifPermission !== 'granted' && (
             <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={!hasUnsavedName}
+              onClick={requestNotifications}
+              className="btn btn-secondary"
+              style={{ height: 30, padding: '0 12px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--accent)' }}
             >
-              Save changes
+              Enable Browser Alerts
             </button>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              {hasUnsavedName ? 'You have unsaved changes' : 'No unsaved changes'}
-            </span>
-          </div>
-        </form>
-      </div>
-
-      {/* ── Card 2: Appearance ── */}
-      <div className="card">
-        <div style={{ marginBottom: 14 }}>
-          <div className="card-title">Appearance</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-            Applies instantly on this device.
-          </div>
+          )}
         </div>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>
+          Functional alerts for budget thresholds and overdue deadlines.
+        </p>
 
-        <div className="segmented-control" style={{ width: 140 }}>
-          <button
-            onClick={() => { if (isDark) toggleTheme(); }}
-            className={`segment-btn${!isDark ? ' active' : ''}`}
-            style={{ flex: 1, justifyContent: 'center' }}
-          >
-            Light
-          </button>
-          <button
-            onClick={() => { if (!isDark) toggleTheme(); }}
-            className={`segment-btn${isDark ? ' active' : ''}`}
-            style={{ flex: 1, justifyContent: 'center' }}
-          >
-            Dark
-          </button>
-        </div>
-      </div>
-
-      {/* ── Card 3: Monthly budget ── */}
-      <div className="card">
-        <div style={{ marginBottom: 14 }}>
-          <div className="card-title">Monthly budget</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-            Used for budget remaining and analytics.
-          </div>
-        </div>
-
-        <form onSubmit={handleSaveBudget} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div className="form-group" style={{ maxWidth: 260 }}>
-            <label className="form-label">Amount</label>
-            <div style={{ position: 'relative' }}>
-              <span style={{
-                position: 'absolute',
-                left: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '13px',
-                color: 'var(--text-muted)',
-              }}>
-                ₹
-              </span>
-              <input
-                type="number"
-                value={budgetInput}
-                onChange={(e) => setBudgetInput(e.target.value)}
-                placeholder="0"
-                className="form-input"
-                style={{ paddingLeft: 26 }}
-              />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Budget Limit Alerts */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                Budget Limit Alerts
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Notify when spending reaches 80% and 100% of monthly budget
+              </div>
             </div>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 4 }}>
-              ₹{monthSpent.toLocaleString('en-IN')} used this month
-            </span>
-          </div>
-
-          <div>
-            <button type="submit" className="btn btn-primary">
-              Save budget
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* ── Card 4: Notifications ── */}
-      <div className="card">
-        <div style={{ marginBottom: 14 }}>
-          <div className="card-title">Notifications</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-            Reminders for deadlines on this device.
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>
-              Deadline reminders
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-              Notify me the day before a task is due
-            </div>
-          </div>
-
-          {/* Toggle Switch */}
-          <label style={{ position: 'relative', display: 'inline-block', width: 38, height: 22, cursor: 'pointer' }}>
             <input
               type="checkbox"
-              checked={notifPermission === 'granted'}
-              onChange={requestNotifications}
-              style={{ opacity: 0, width: 0, height: 0 }}
+              checked={preferences.notifBudgetLimit ?? true}
+              onChange={e => updatePreferences({ notifBudgetLimit: e.target.checked })}
+              style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
             />
-            <span style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: notifPermission === 'granted' ? 'var(--accent-solid)' : 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              borderRadius: 22,
-              transition: 'all 0.2s ease',
-            }}>
-              <span style={{
-                position: 'absolute',
-                left: notifPermission === 'granted' ? 18 : 2,
-                top: 2,
-                width: 16,
-                height: 16,
-                backgroundColor: '#FFFFFF',
-                borderRadius: '50%',
-                transition: 'left 0.2s ease',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-              }} />
-            </span>
-          </label>
-        </div>
-      </div>
+          </div>
 
-      {/* ── Card 5: Backup and restore ── */}
-      <div className="card">
-        <div style={{ marginBottom: 14 }}>
-          <div className="card-title">Backup and restore</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-            Export everything as a JSON file, or restore from one.
+          {/* Task Reminders */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+            <div>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                Task & Deadline Reminders
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Periodic alerts for tasks scheduled for today and overdue items
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={preferences.notifTaskReminders ?? true}
+              onChange={e => updatePreferences({ notifTaskReminders: e.target.checked })}
+              style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }}
+            />
           </div>
         </div>
+      </section>
 
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button onClick={exportDataAsJSON} className="btn btn-secondary">
-            <Download size={14} strokeWidth={1.75} />
-            <span>Export data</span>
+      {/* ── 5. Data Management ── */}
+      <section style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '20px 20px',
+      }}>
+        <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px' }}>
+          Data Management & Reports
+        </h2>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 16px' }}>
+          Export your complete account data or generate a financial PDF statement.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+          {/* Download PDF report button */}
+          <button
+            type="button"
+            onClick={() => setIsReportModalOpen(true)}
+            className="btn btn-secondary"
+            style={{
+              height: 40,
+              padding: '0 14px',
+              borderRadius: 'var(--radius-control)',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <FileText size={15} color="var(--accent)" />
+            <span>Monthly PDF Report</span>
           </button>
-          <button onClick={() => fileInputRef.current?.click()} className="btn btn-secondary">
-            <Upload size={14} strokeWidth={1.75} />
-            <span>Import data</span>
+
+          {/* Export JSON */}
+          <button
+            type="button"
+            onClick={exportDataAsJSON}
+            className="btn btn-secondary"
+            style={{
+              height: 40,
+              padding: '0 14px',
+              borderRadius: 'var(--radius-control)',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <Download size={15} />
+            <span>Export Backup (JSON)</span>
+          </button>
+
+          {/* Import JSON */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="btn btn-secondary"
+            style={{
+              height: 40,
+              padding: '0 14px',
+              borderRadius: 'var(--radius-control)',
+              fontSize: '0.8125rem',
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+            }}
+          >
+            <Upload size={15} />
+            <span>Import Backup</span>
           </button>
           <input
-            type="file"
             ref={fileInputRef}
-            onChange={handleJSONFileChange}
+            type="file"
             accept=".json,application/json"
+            onChange={handleJSONFileChange}
             style={{ display: 'none' }}
           />
         </div>
 
-        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 10 }}>
-          Importing replaces your current data. Export a backup first.
-        </div>
-      </div>
-
-      {/* ── Card 6: Danger Zone / Clear all data ── */}
-      <div className="card" style={{ border: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        {/* Reset Data Danger zone trigger */}
+        <div style={{
+          marginTop: 18,
+          paddingTop: 16,
+          borderTop: '1px solid var(--border)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 10,
+        }}>
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
-              Clear all data
+            <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--danger)' }}>
+              Clear Application Data
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
-              Permanently delete all expenses, tasks, your budget and profile from this device.
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+              Reset expenses, tasks, and budgets for your user account
             </div>
           </div>
 
           <button
-            onClick={() => setIsClearModalOpen(true)}
-            className="btn btn-danger"
-          >
-            Clear all data...
-          </button>
-        </div>
-      </div>
-
-      {/* Sign Out Row */}
-      {currentUser && (
-        <div style={{ display: 'flex', justifyContent: 'flex-start', paddingTop: 8 }}>
-          <button
-            onClick={logout}
+            type="button"
+            onClick={() => {
+              setDeleteConfirmationText('');
+              setIsClearModalOpen(true);
+            }}
             className="btn btn-secondary"
-            style={{ color: 'var(--danger)' }}
+            style={{
+              height: 32,
+              padding: '0 14px',
+              borderRadius: 'var(--radius-control)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--danger)',
+            }}
           >
-            <LogOut size={14} strokeWidth={1.75} />
-            <span>Sign out of CampusFlow</span>
+            Clear Data
           </button>
         </div>
-      )}
+      </section>
 
-      {/* ── Clear All Data Confirmation Modal (Screen 10 in PDF) ── */}
+      {/* ── 6. Account & Security ── */}
+      <section style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '20px 20px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <Shield size={16} color="var(--accent)" />
+          <h2 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Account & Security
+          </h2>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Account info row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <div>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                {displayName}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                {emailVal}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSendPasswordReset}
+              disabled={isSendingReset || resetSent}
+              className="btn btn-secondary"
+              style={{
+                height: 32,
+                padding: '0 14px',
+                borderRadius: 'var(--radius-control)',
+                fontSize: '0.75rem',
+                fontWeight: 500,
+              }}
+            >
+              {resetSent ? 'Reset Link Sent' : isSendingReset ? 'Sending...' : 'Reset Password'}
+            </button>
+          </div>
+
+          {/* Sign Out row */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingTop: 14,
+            borderTop: '1px solid var(--border)',
+          }}>
+            <div>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+                Sign Out
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Log out of your CampusFlow account
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={logout}
+              className="btn btn-secondary"
+              style={{
+                height: 32,
+                padding: '0 14px',
+                borderRadius: 'var(--radius-control)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--danger)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <LogOut size={13} />
+              Sign Out
+            </button>
+          </div>
+
+          {/* Delete Account */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingTop: 14,
+            borderTop: '1px solid var(--border)',
+          }}>
+            <div>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--danger)' }}>
+                Delete Account
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Permanently delete your account and all associated data
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setDeleteAccountText('');
+                setDeleteAccountError('');
+                setIsDeleteAccountModalOpen(true);
+              }}
+              className="btn btn-secondary"
+              style={{
+                height: 32,
+                padding: '0 14px',
+                borderRadius: 'var(--radius-control)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--danger)',
+              }}
+            >
+              Delete Account
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Clear All Data Confirmation Modal ── */}
       {isClearModalOpen && (
         <div className="modal-overlay" onClick={() => setIsClearModalOpen(false)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Clear all data?</span>
+          <div
+            className="modal-card"
+            style={{
+              maxWidth: 420,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-modal)',
+              padding: 24,
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 'var(--radius-control)',
+                  background: 'rgba(180,35,24,0.1)',
+                  color: 'var(--danger)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <AlertTriangle size={16} />
+                </div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+                  Clear All Data?
+                </h3>
+              </div>
               <button
                 onClick={() => setIsClearModalOpen(false)}
                 className="btn-icon"
-                aria-label="Close"
+                style={{ width: 28, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
 
-            <div className="modal-body">
-              <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.5 }}>
-                This permanently deletes all expenses, tasks, your budget and profile from this device. This cannot be undone.
-              </p>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 16px' }}>
+              This will permanently delete all your expenses, tasks, budgets, and custom categories stored on this device.
+            </p>
 
-              {/* Tip Callout */}
-              <div style={{
-                padding: '10px 14px',
-                borderRadius: 'var(--radius-control)',
-                background: 'var(--surface-2)',
-                border: '1px solid var(--border)',
-                fontSize: '12px',
-                color: 'var(--text-muted)',
-              }}>
-                Tip: export a backup first from Settings.
-              </div>
-
-              {/* DELETE confirmation prompt */}
-              <div className="form-group">
-                <label className="form-label">Type DELETE to confirm</label>
-                <input
-                  type="text"
-                  value={deleteConfirmationText}
-                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
-                  placeholder="DELETE"
-                  className="form-input form-input-modal"
-                  autoFocus
-                />
-              </div>
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: 6 }}>
+                Type <strong style={{ color: 'var(--danger)' }}>DELETE</strong> to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmationText}
+                onChange={e => setDeleteConfirmationText(e.target.value)}
+                placeholder="DELETE"
+                style={{
+                  width: '100%',
+                  height: 38,
+                  padding: '0 12px',
+                  borderRadius: 'var(--radius-control)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-canvas)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                autoFocus
+              />
             </div>
 
-            <div className="modal-footer">
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
               <button
                 type="button"
-                onClick={() => { setIsClearModalOpen(false); setDeleteConfirmationText(''); }}
-                className="btn btn-secondary btn-modal"
+                onClick={() => setIsClearModalOpen(false)}
+                className="btn btn-secondary"
+                style={{ height: 36, padding: '0 14px', borderRadius: 'var(--radius-control)', fontSize: '0.8125rem' }}
               >
                 Cancel
               </button>
@@ -418,9 +818,127 @@ export const SettingsView = () => {
                 type="button"
                 onClick={handleConfirmClearAll}
                 disabled={deleteConfirmationText.trim().toUpperCase() !== 'DELETE'}
-                className="btn btn-danger-solid btn-modal"
+                style={{
+                  height: 36,
+                  padding: '0 16px',
+                  borderRadius: 'var(--radius-control)',
+                  background: deleteConfirmationText.trim().toUpperCase() === 'DELETE' ? 'var(--danger)' : 'var(--border)',
+                  color: '#FFFFFF',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: deleteConfirmationText.trim().toUpperCase() === 'DELETE' ? 'pointer' : 'not-allowed',
+                }}
               >
-                Clear all data
+                Permanently Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Account Confirmation Modal ── */}
+      {isDeleteAccountModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsDeleteAccountModalOpen(false)}>
+          <div
+            className="modal-card"
+            style={{
+              maxWidth: 420,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-modal)',
+              padding: 24,
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 'var(--radius-control)',
+                  background: 'rgba(180,35,24,0.1)',
+                  color: 'var(--danger)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <AlertTriangle size={16} />
+                </div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--danger)', margin: 0 }}>
+                  Delete Account?
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsDeleteAccountModalOpen(false)}
+                className="btn-icon"
+                style={{ width: 28, height: 28, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 14px' }}>
+              This will permanently delete your authentication account from Firebase and remove all your data. This action cannot be undone.
+            </p>
+
+            {deleteAccountError && (
+              <div style={{ padding: '8px 12px', borderRadius: 'var(--radius-control)', background: 'rgba(180,35,24,0.08)', border: '1px solid var(--danger)', fontSize: '0.75rem', color: 'var(--danger)', marginBottom: 14 }}>
+                {deleteAccountError}
+              </div>
+            )}
+
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: 6 }}>
+                Type <strong style={{ color: 'var(--danger)' }}>DELETE MY ACCOUNT</strong> to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteAccountText}
+                onChange={e => setDeleteAccountText(e.target.value)}
+                placeholder="DELETE MY ACCOUNT"
+                style={{
+                  width: '100%',
+                  height: 38,
+                  padding: '0 12px',
+                  borderRadius: 'var(--radius-control)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-canvas)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                autoFocus
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => setIsDeleteAccountModalOpen(false)}
+                className="btn btn-secondary"
+                style={{ height: 36, padding: '0 14px', borderRadius: 'var(--radius-control)', fontSize: '0.8125rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteAccount}
+                disabled={deleteAccountText.trim().toUpperCase() !== 'DELETE MY ACCOUNT' || isDeletingAccount}
+                style={{
+                  height: 36,
+                  padding: '0 16px',
+                  borderRadius: 'var(--radius-control)',
+                  background: deleteAccountText.trim().toUpperCase() === 'DELETE MY ACCOUNT' ? 'var(--danger)' : 'var(--border)',
+                  color: '#FFFFFF',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: deleteAccountText.trim().toUpperCase() === 'DELETE MY ACCOUNT' && !isDeletingAccount ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {isDeletingAccount ? 'Deleting...' : 'Delete My Account'}
               </button>
             </div>
           </div>

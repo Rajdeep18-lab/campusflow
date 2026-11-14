@@ -5,6 +5,8 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile,
+  updatePassword,
+  deleteUser,
   onAuthStateChanged,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '../firebase/config';
@@ -102,6 +104,56 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update User Profile (displayName, photoURL)
+  const updateUserProfile = async ({ displayName, photoURL }) => {
+    setAuthError(null);
+    if (!auth?.currentUser) {
+      return;
+    }
+    try {
+      const updateData = {};
+      if (displayName !== undefined) updateData.displayName = displayName.trim();
+      if (photoURL !== undefined) updateData.photoURL = photoURL;
+      await updateProfile(auth.currentUser, updateData);
+      setCurrentUser({ ...auth.currentUser });
+    } catch (err) {
+      const friendlyMsg = getAuthErrorMessage(err);
+      setAuthError(friendlyMsg);
+      throw new Error(friendlyMsg);
+    }
+  };
+
+  // Update Password
+  const updateUserPassword = async (newPassword) => {
+    setAuthError(null);
+    if (!auth?.currentUser) {
+      throw new Error('No user is currently signed in.');
+    }
+    try {
+      await updatePassword(auth.currentUser, newPassword);
+    } catch (err) {
+      const friendlyMsg = getAuthErrorMessage(err);
+      setAuthError(friendlyMsg);
+      throw new Error(friendlyMsg);
+    }
+  };
+
+  // Delete User Account
+  const deleteUserAccount = async () => {
+    setAuthError(null);
+    if (!auth?.currentUser) {
+      throw new Error('No user is currently signed in.');
+    }
+    try {
+      await deleteUser(auth.currentUser);
+      setCurrentUser(null);
+    } catch (err) {
+      const friendlyMsg = getAuthErrorMessage(err);
+      setAuthError(friendlyMsg);
+      throw new Error(friendlyMsg);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -113,6 +165,9 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         resetPassword,
+        updateUserProfile,
+        updateUserPassword,
+        deleteUserAccount,
         isFirebaseConfigured,
       }}
     >
@@ -122,4 +177,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
-

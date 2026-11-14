@@ -8,6 +8,7 @@ export const BudgetModal = () => {
     setIsBudgetModalOpen,
     monthlyBudget,
     saveMonthlyBudget,
+    currencySymbol,
   } = useApp();
 
   const [inputVal, setInputVal] = useState('');
@@ -65,7 +66,7 @@ export const BudgetModal = () => {
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 24 }}>
             <label className="form-label" style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)', marginBottom: 6, display: 'block' }}>
-              Monthly limit (₹)
+              Monthly limit ({currencySymbol})
             </label>
             <div style={{ position: 'relative' }}>
               <span style={{
@@ -78,7 +79,7 @@ export const BudgetModal = () => {
                 color: 'var(--text-secondary)',
                 pointerEvents: 'none',
               }}>
-                ₹
+                {currencySymbol}
               </span>
               <input
                 type="number"

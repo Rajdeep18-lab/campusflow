@@ -1,17 +1,20 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 const sizeMap = {
-  sm: { box: 32, text: '0.75rem', font: 700, border: 2 },
-  md: { box: 38, text: '0.875rem', font: 700, border: 2 },
-  lg: { box: 56, text: '1.25rem', font: 700, border: 2 },
-  xl: { box: 80, text: '2rem', font: 800, border: 2.5 },
+  sm: { box: 32, text: '0.75rem', font: 700 },
+  md: { box: 38, text: '0.875rem', font: 700 },
+  lg: { box: 56, text: '1.25rem', font: 700 },
+  xl: { box: 72, text: '1.75rem', font: 700 },
 };
 
 export const UserAvatar = ({ size = 'md', className = '' }) => {
   const { profile } = useApp();
-  const name = profile?.name || 'Student';
-  const avatarUrl = profile?.avatarUrl;
+  const { currentUser } = useAuth();
+
+  const name = profile?.name || currentUser?.displayName || 'Student';
+  const avatarUrl = profile?.avatarUrl || currentUser?.photoURL;
   const initial = name.trim().charAt(0).toUpperCase() || 'S';
   const s = sizeMap[size] || sizeMap.md;
 
@@ -26,7 +29,7 @@ export const UserAvatar = ({ size = 'md', className = '' }) => {
           height: s.box,
           borderRadius: '50%',
           objectFit: 'cover',
-          border: `${s.border}px solid var(--accent-border)`,
+          border: '1px solid var(--border)',
           flexShrink: 0,
         }}
       />
@@ -46,11 +49,9 @@ export const UserAvatar = ({ size = 'md', className = '' }) => {
         alignItems: 'center',
         justifyContent: 'center',
         color: '#FFFFFF',
-        fontFamily: 'var(--font-heading)',
         fontSize: s.text,
         fontWeight: s.font,
-        border: `${s.border}px solid var(--accent-border)`,
-        boxShadow: '0 2px 6px var(--accent-glow)',
+        border: '1px solid var(--border)',
         userSelect: 'none',
         flexShrink: 0,
         letterSpacing: '-0.01em',

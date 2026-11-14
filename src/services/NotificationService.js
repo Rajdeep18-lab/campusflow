@@ -1,15 +1,16 @@
 /**
- * NotificationService — CampusFlow Task Reminder Engine
+ * NotificationService — CampusFlow Task & Budget Reminder Engine
  *
  * Handles:
  *  - Permission request (with graceful fallback)
  *  - Firing browser push notifications for overdue / due-today tasks
- *  - Deduplication (won't re-fire same notification within 6 hours)
+ *  - Firing budget threshold alerts (>80% and >100%)
+ *  - Deduplication (won't re-fire same notification within cooldown)
  *  - Scheduling periodic checks via setInterval
  */
 
 const STORAGE_KEY = 'campusflow_notif_fired';
-const COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 hours per-task dedup
+const COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6 hours per item dedup
 
 /* ── Permission helpers ── */
 
@@ -35,7 +36,6 @@ export const requestNotifPermission = async () => {
     return 'unsupported';
   }
 };
-
 
 /* ── Deduplication store ── */
 
@@ -63,7 +63,6 @@ const wasFiredRecently = (id) => {
 const markFired = (id) => {
   const map = getFiredMap();
   map[id] = Date.now();
-  // Cleanup old entries (> 2 days)
   const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000;
   Object.keys(map).forEach(k => { if (map[k] < cutoff) delete map[k]; });
   setFiredMap(map);
@@ -76,7 +75,7 @@ const fire = (title, body, tag, onClick) => {
 
   const n = new Notification(title, {
     body,
-    tag, // deduplicates same-tag notifs in notification center
+    tag,
     icon: '/icon-512.svg',
     badge: '/icon-192.svg',
     requireInteraction: false,
@@ -86,12 +85,8 @@ const fire = (title, body, tag, onClick) => {
   if (onClick) n.onclick = () => { onClick(); n.close(); };
 };
 
-/* ── Main check function ── */
+/* ── Main Task check function ── */
 
-/**
- * @param {Array} todos - current todo list from context
- * @param {Function} onClickTask - callback when user taps a task notification
- */
 export const checkAndNotify = (todos, onClickTask) => {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   if (!Array.isArray(todos) || todos.length === 0) return;
@@ -101,20 +96,20 @@ export const checkAndNotify = (todos, onClickTask) => {
   const overdue = todos.filter(t => !t.completed && t.dueDate && t.dueDate < todayStr);
   const dueToday = todos.filter(t => !t.completed && t.dueDate === todayStr);
 
-  // ── Overdue group notification ──
+  // Overdue group notification
   if (overdue.length > 0) {
     const groupId = `overdue-group-${todayStr}`;
     if (!wasFiredRecently(groupId)) {
       if (overdue.length === 1) {
         fire(
-          '🔴 Overdue Task',
-          `"${overdue[0].title}" is overdue! Complete it now.`,
+          'Overdue Task Alert',
+          `"${overdue[0].title}" is overdue! Review your task list.`,
           'overdue-single',
           onClickTask
         );
       } else {
         fire(
-          `🔴 ${overdue.length} Overdue Tasks`,
+          `${overdue.length} Overdue Tasks`,
           overdue.slice(0, 3).map(t => `• ${t.title}`).join('\n') +
             (overdue.length > 3 ? `\n…and ${overdue.length - 3} more` : ''),
           'overdue-group',
@@ -125,13 +120,13 @@ export const checkAndNotify = (todos, onClickTask) => {
     }
   }
 
-  // ── Due Today notifications (per-task, to avoid spam only fire each once per day) ──
+  // Due Today notifications
   dueToday.forEach(task => {
     const taskKey = `due-today-${task.id}-${todayStr}`;
     if (!wasFiredRecently(taskKey)) {
       fire(
-        `⏰ Due Today: ${task.title}`,
-        `Priority: ${task.priority} · Don't forget to complete this today!`,
+        `Due Today: ${task.title}`,
+        `Priority: ${task.priority} · Scheduled for completion today.`,
         taskKey,
         onClickTask
       );
@@ -140,19 +135,49 @@ export const checkAndNotify = (todos, onClickTask) => {
   });
 };
 
+/* ── Budget Check Function ── */
+
+export const checkBudgetAndNotify = (monthlySpent, monthlyBudget, onClickExpenses) => {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!monthlyBudget || monthlyBudget <= 0) return;
+
+  const currentMonthStr = new Date().toISOString().substring(0, 7);
+  const percent = (monthlySpent / monthlyBudget) * 100;
+
+  if (percent >= 100) {
+    const key = `budget-exceeded-${currentMonthStr}`;
+    if (!wasFiredRecently(key)) {
+      fire(
+        'Budget Exceeded Alert',
+        `You have exceeded your monthly budget of ${monthlyBudget.toLocaleString('en-IN')}. Spent: ${monthlySpent.toLocaleString('en-IN')}`,
+        'budget-exceeded',
+        onClickExpenses
+      );
+      markFired(key);
+    }
+  } else if (percent >= 80) {
+    const key = `budget-warning-80-${currentMonthStr}`;
+    if (!wasFiredRecently(key)) {
+      fire(
+        'Budget Warning (80% Reached)',
+        `You have used ${Math.round(percent)}% of your monthly budget. Remaining: ${(monthlyBudget - monthlySpent).toLocaleString('en-IN')}`,
+        'budget-warning',
+        onClickExpenses
+      );
+      markFired(key);
+    }
+  }
+};
+
 /* ── Scheduler ── */
 
 let _intervalId = null;
 
-/**
- * Start a periodic check every `intervalMs` milliseconds.
- * Clears any existing interval first.
- */
-export const startNotifScheduler = (getTodos, onClickTask, intervalMs = 30 * 60 * 1000) => {
+export const startNotifScheduler = (getTodos, onClickTask, taskRemindersEnabled = true, intervalMs = 30 * 60 * 1000) => {
   stopNotifScheduler();
-  // Fire once immediately
+  if (!taskRemindersEnabled) return;
+
   checkAndNotify(getTodos(), onClickTask);
-  // Then on interval
   _intervalId = setInterval(() => {
     checkAndNotify(getTodos(), onClickTask);
   }, intervalMs);

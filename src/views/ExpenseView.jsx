@@ -4,8 +4,6 @@ import {
   Search,
   Pencil,
   Trash2,
-  ChevronDown,
-  ArrowUpDown,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES, getCategoryColor } from '../utils/categoryColors';
@@ -21,6 +19,9 @@ export const ExpenseView = () => {
     setIsBudgetModalOpen,
     setEditingExpense,
     deleteExpense,
+    formatCurrency,
+    formatDate,
+    customCategories,
     profile,
   } = useApp();
 
@@ -44,14 +45,28 @@ export const ExpenseView = () => {
   const todayCount = expenses.filter(e => e.date === todayStr).length;
   const avgDaily = currentDay > 0 ? Math.round(monthSpent / currentDay) : 0;
 
+  // Combined categories for filter chips
+  const allCategoryChips = useMemo(() => {
+    return [
+      ...CATEGORIES,
+      ...customCategories.map(c => ({
+        id: c.label,
+        label: c.label,
+        light: c.light,
+        dark: c.dark,
+      })),
+    ];
+  }, [customCategories]);
+
   // Filtering & sorting
   const filtered = useMemo(() => {
     return expenses
       .filter(exp => {
         const matchesSearch = (exp.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                               (exp.notes || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              (exp.category || '').toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCat === 'All' || exp.category === selectedCat;
+                              (exp.category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              (exp.paymentMethod || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = selectedCat === 'All' || exp.category?.toLowerCase() === selectedCat.toLowerCase();
         return matchesSearch && matchesCategory;
       })
       .sort((a, b) => {
@@ -71,8 +86,7 @@ export const ExpenseView = () => {
   const formatDateLabel = (dateStr) => {
     if (!dateStr) return '';
     if (dateStr === todayStr) return 'Today';
-    const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    return formatDate(dateStr);
   };
 
   // Grouped for mobile view
@@ -92,15 +106,16 @@ export const ExpenseView = () => {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{
-            fontSize: '22px',
+            fontSize: '1.375rem',
             fontWeight: 600,
             letterSpacing: '-0.02em',
-            color: 'var(--text)',
+            color: 'var(--text-primary)',
             lineHeight: 1.25,
+            margin: 0,
           }}>
             Expenses
           </h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginTop: 4, margin: 0 }}>
             Everything you have spent in {currentMonthName}
           </p>
         </div>
@@ -109,12 +124,14 @@ export const ExpenseView = () => {
           <button
             onClick={() => setIsBudgetModalOpen(true)}
             className="btn btn-secondary"
+            style={{ height: 34, padding: '0 12px', fontSize: '0.8125rem' }}
           >
             <span>Set budget</span>
           </button>
           <button
             onClick={() => setIsQuickAddExpenseOpen(true)}
             className="btn btn-primary"
+            style={{ height: 34, padding: '0 14px', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--accent)', color: '#fff' }}
           >
             <Plus size={14} strokeWidth={2} />
             <span>Add expense</span>
@@ -127,8 +144,8 @@ export const ExpenseView = () => {
         {/* Cell 1: Spent today */}
         <div className="summary-cell">
           <div className="summary-label">Spent today</div>
-          <div className="summary-number">
-            ₹{todayExpensesTotal.toLocaleString('en-IN')}
+          <div className="summary-number num">
+            {formatCurrency(todayExpensesTotal)}
           </div>
           <div className="summary-hint">
             {todayCount} transaction{todayCount !== 1 ? 's' : ''}
@@ -138,26 +155,26 @@ export const ExpenseView = () => {
         {/* Cell 2: Spent this month */}
         <div className="summary-cell">
           <div className="summary-label">Spent this month</div>
-          <div className="summary-number">
-            ₹{monthSpent.toLocaleString('en-IN')}
+          <div className="summary-number num">
+            {formatCurrency(monthSpent)}
           </div>
           <div className="summary-hint">
-            {monthExpenses.length} transactions · avg ₹{avgDaily} a day
+            {monthExpenses.length} transactions · avg {formatCurrency(avgDaily)} a day
           </div>
         </div>
 
         {/* Cell 3: Budget remaining */}
         <div className="summary-cell">
           <div className="summary-label">Budget remaining</div>
-          <div className="summary-number">
-            ₹{remainingBudget > 0 ? remainingBudget.toLocaleString('en-IN') : (monthlyBudget > 0 ? 0 : '—')}
+          <div className="summary-number num">
+            {monthlyBudget > 0 ? formatCurrency(remainingBudget) : '—'}
           </div>
           {monthlyBudget > 0 && (
             <div style={{
               width: '100%',
               height: 4,
               borderRadius: 2,
-              background: 'var(--surface-2)',
+              background: 'var(--border)',
               margin: '6px 0 2px',
               overflow: 'hidden',
             }}>
@@ -165,14 +182,14 @@ export const ExpenseView = () => {
                 height: '100%',
                 borderRadius: 2,
                 width: `${Math.min(budgetUsagePercent, 100)}%`,
-                background: 'var(--accent-solid)',
+                background: 'var(--accent)',
                 transition: 'width 0.4s ease',
               }} />
             </div>
           )}
           <div className="summary-hint">
             {monthlyBudget > 0
-              ? `${budgetUsagePercent}% of ₹${monthlyBudget.toLocaleString('en-IN')} used`
+              ? `${budgetUsagePercent}% of ${formatCurrency(monthlyBudget)} used`
               : 'Set a monthly budget to track'}
           </div>
         </div>
@@ -199,7 +216,7 @@ export const ExpenseView = () => {
           <div style={{ position: 'relative', width: 220 }}>
             <Search
               size={14}
-              color="var(--text-muted)"
+              color="var(--text-secondary)"
               strokeWidth={1.75}
               style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}
             />
@@ -207,9 +224,9 @@ export const ExpenseView = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              placeholder="Search expenses"
+              placeholder="Search expenses, payment..."
               className="form-input"
-              style={{ paddingLeft: 30, height: 34, fontSize: '13px' }}
+              style={{ paddingLeft: 30, height: 34, fontSize: '0.8125rem' }}
             />
           </div>
 
@@ -228,13 +245,13 @@ export const ExpenseView = () => {
             >
               <span>All</span>
             </button>
-            {CATEGORIES.map(cat => {
-              const isActive = selectedCat === cat.id;
-              const dotColor = getCategoryColor(cat.id, isDark ? 'dark' : 'light');
+            {allCategoryChips.map(cat => {
+              const isActive = selectedCat.toLowerCase() === cat.label.toLowerCase();
+              const dotColor = getCategoryColor(cat.label, isDark ? 'dark' : 'light', customCategories);
               return (
                 <button
-                  key={cat.id}
-                  onClick={() => { setSelectedCat(cat.id); setCurrentPage(1); }}
+                  key={cat.id || cat.label}
+                  onClick={() => { setSelectedCat(cat.label); setCurrentPage(1); }}
                   className={`chip${isActive ? ' active' : ''}`}
                 >
                   <span
@@ -254,7 +271,7 @@ export const ExpenseView = () => {
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
             className="form-input"
-            style={{ height: 34, padding: '0 8px', fontSize: '12px', width: 'auto', cursor: 'pointer' }}
+            style={{ height: 34, padding: '0 8px', fontSize: '0.75rem', width: 'auto', cursor: 'pointer' }}
           >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
@@ -267,7 +284,7 @@ export const ExpenseView = () => {
       {/* ── Desktop Table View (>= 768px) ── */}
       <div className="card hidden md:block" style={{ padding: 0, overflow: 'hidden' }}>
         {paginated.length === 0 ? (
-          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
             No expenses found. Try adjusting your search or filters.
           </div>
         ) : (
@@ -275,22 +292,23 @@ export const ExpenseView = () => {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th style={{ width: '38%' }}>Description</th>
-                  <th style={{ width: '22%' }}>Category</th>
-                  <th style={{ width: '20%' }}>Date</th>
-                  <th style={{ width: '12%', textAlign: 'right' }}>Amount</th>
+                  <th style={{ width: '34%' }}>Description</th>
+                  <th style={{ width: '20%' }}>Category</th>
+                  <th style={{ width: '16%' }}>Payment Method</th>
+                  <th style={{ width: '16%' }}>Date</th>
+                  <th style={{ width: '14%', textAlign: 'right' }}>Amount</th>
                   <th style={{ width: '8%', textAlign: 'right' }}></th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map(exp => {
-                  const catColor = getCategoryColor(exp.category, isDark ? 'dark' : 'light');
+                  const catColor = getCategoryColor(exp.category, isDark ? 'dark' : 'light', customCategories);
                   return (
                     <tr key={exp.id}>
                       <td style={{ fontWeight: 500 }}>
                         {exp.title}
                         {exp.notes && (
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: 2 }}>
+                          <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', marginTop: 2 }}>
                             {exp.notes}
                           </div>
                         )}
@@ -306,21 +324,33 @@ export const ExpenseView = () => {
                               flexShrink: 0,
                             }}
                           />
-                          <span style={{ fontSize: '13px', color: 'var(--text)' }}>
+                          <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)' }}>
                             {exp.category}
                           </span>
                         </div>
                       </td>
-                      <td style={{ color: 'var(--text-muted)' }}>
+                      <td>
+                        <span style={{
+                          fontSize: '0.6875rem',
+                          fontWeight: 500,
+                          padding: '2px 8px',
+                          borderRadius: 4,
+                          background: 'var(--bg-canvas)',
+                          border: '1px solid var(--border)',
+                          color: 'var(--text-secondary)',
+                        }}>
+                          {exp.paymentMethod || 'UPI'}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-secondary)' }} className="num">
                         {formatDateLabel(exp.date)}
                       </td>
                       <td style={{
                         textAlign: 'right',
                         fontWeight: 600,
-                        fontFeatureSettings: '"tnum" 1',
-                        fontVariantNumeric: 'tabular-nums',
-                      }}>
-                        ₹{Number(exp.amount || 0).toLocaleString('en-IN')}
+                        color: 'var(--text-primary)',
+                      }} className="num">
+                        {formatCurrency(exp.amount)}
                       </td>
                       <td style={{ textAlign: 'right' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -360,8 +390,8 @@ export const ExpenseView = () => {
             justifyContent: 'space-between',
             padding: '12px 16px',
             borderTop: '1px solid var(--border)',
-            fontSize: '12px',
-            color: 'var(--text-muted)',
+            fontSize: '0.75rem',
+            color: 'var(--text-secondary)',
           }}>
             <div>
               Showing {paginated.length} of {totalItems}
@@ -371,7 +401,7 @@ export const ExpenseView = () => {
                 onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
                 className="btn btn-secondary"
-                style={{ height: 28, padding: '0 10px', fontSize: '12px' }}
+                style={{ height: 28, padding: '0 10px', fontSize: '0.75rem' }}
               >
                 Previous
               </button>
@@ -379,7 +409,7 @@ export const ExpenseView = () => {
                 onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                 disabled={currentPage >= totalPages}
                 className="btn btn-secondary"
-                style={{ height: 28, padding: '0 10px', fontSize: '12px' }}
+                style={{ height: 28, padding: '0 10px', fontSize: '0.75rem' }}
               >
                 Next
               </button>
@@ -388,21 +418,21 @@ export const ExpenseView = () => {
         )}
       </div>
 
-      {/* ── Mobile Grouped List View (< 768px, Page 12 in PDF) ── */}
+      {/* ── Mobile Grouped List View (< 768px) ── */}
       <div className="block md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {Object.keys(groupedByDate).length === 0 ? (
-          <div className="card" style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+          <div className="card" style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
             No expenses found.
           </div>
         ) : (
           Object.entries(groupedByDate).map(([dateKey, items]) => (
             <div key={dateKey} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', paddingLeft: 4 }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', paddingLeft: 4 }}>
                 {formatDateLabel(dateKey)}
               </div>
               <div className="card" style={{ padding: '0 16px' }}>
                 {items.map((exp, idx) => {
-                  const catColor = getCategoryColor(exp.category, isDark ? 'dark' : 'light');
+                  const catColor = getCategoryColor(exp.category, isDark ? 'dark' : 'light', customCategories);
                   return (
                     <div
                       key={exp.id || idx}
@@ -411,30 +441,38 @@ export const ExpenseView = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '12px 0',
-                        borderBottom: idx < items.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                        borderBottom: idx < items.length - 1 ? '1px solid var(--border)' : 'none',
                       }}
                     >
                       <div style={{ minWidth: 0, flex: 1, paddingRight: 12 }}>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
                           {exp.title}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
                           <span style={{ width: 7, height: 7, borderRadius: 2, background: catColor, flexShrink: 0 }} />
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                             {exp.category}
+                          </span>
+                          <span style={{
+                            fontSize: '0.625rem',
+                            padding: '1px 5px',
+                            borderRadius: 3,
+                            background: 'var(--bg-canvas)',
+                            border: '1px solid var(--border)',
+                            color: 'var(--text-secondary)',
+                          }}>
+                            {exp.paymentMethod || 'UPI'}
                           </span>
                         </div>
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                         <span style={{
-                          fontSize: '14px',
+                          fontSize: '0.875rem',
                           fontWeight: 600,
-                          color: 'var(--text)',
-                          fontFeatureSettings: '"tnum" 1',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}>
-                          ₹{Number(exp.amount || 0).toLocaleString('en-IN')}
+                          color: 'var(--text-primary)',
+                        }} className="num">
+                          {formatCurrency(exp.amount)}
                         </span>
                         <div style={{ display: 'inline-flex', gap: 2 }}>
                           <button
@@ -466,7 +504,7 @@ export const ExpenseView = () => {
         {/* Mobile Pagination */}
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 4px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               Page {currentPage} of {totalPages}
             </span>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -491,7 +529,7 @@ export const ExpenseView = () => {
         )}
       </div>
 
-      {/* Floating Action Button (Mobile, Page 12 in PDF) */}
+      {/* Floating Action Button (Mobile) */}
       <button
         onClick={() => setIsQuickAddExpenseOpen(true)}
         className="mobile-fab-pill md:hidden"
