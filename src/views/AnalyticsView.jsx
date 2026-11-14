@@ -249,12 +249,13 @@ export const AnalyticsView = () => {
       {/* ── Main 2-Column Layout ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
         gap: 20,
         alignItems: 'flex-start',
+        width: '100%',
       }}>
         {/* ── LEFT COLUMN ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
           {/* Card: Daily spending */}
           <div className="card">
             <div className="card-header">
@@ -431,7 +432,7 @@ export const AnalyticsView = () => {
         </div>
 
         {/* ── RIGHT COLUMN ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
           {/* Card: Budget status */}
           <div className="card">
             <div className="card-header">

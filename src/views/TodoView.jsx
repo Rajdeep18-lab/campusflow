@@ -116,79 +116,43 @@ export const TodoView = () => {
         key={todo.id}
         style={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
+          flexDirection: 'column',
+          gap: 6,
+          padding: '12px 14px',
           borderBottom: '1px solid var(--border-subtle)',
-          gap: 12,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-          <input
-            type="checkbox"
-            checked={todo.completed}
-            onChange={() => toggleTodoCompleted(todo.id)}
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: 4,
-              cursor: 'pointer',
-              accentColor: 'var(--accent-solid)',
-              flexShrink: 0,
-            }}
-          />
-          <span style={{
-            fontSize: '13px',
-            fontWeight: 400,
-            color: todo.completed ? 'var(--text-muted)' : 'var(--text)',
-            textDecoration: todo.completed ? 'line-through' : 'none',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-            {todo.title}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-          {/* Subject tag pill if present */}
-          {todo.tag && (
+        {/* Main row: Checkbox + Title + Edit/Delete Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+            <input
+              type="checkbox"
+              checked={todo.completed}
+              onChange={() => toggleTodoCompleted(todo.id)}
+              style={{
+                width: 16,
+                height: 16,
+                borderRadius: 4,
+                cursor: 'pointer',
+                accentColor: 'var(--accent-solid)',
+                flexShrink: 0,
+              }}
+            />
             <span style={{
-              fontSize: '11px',
-              padding: '2px 8px',
-              borderRadius: 4,
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border)',
-              color: 'var(--text-muted)',
-              fontWeight: 500,
+              fontSize: '13px',
+              fontWeight: 400,
+              color: todo.completed ? 'var(--text-muted)' : 'var(--text)',
+              textDecoration: todo.completed ? 'line-through' : 'none',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}>
-              {todo.tag}
+              {todo.title}
             </span>
-          )}
-
-          {/* Date */}
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            {formatDateLabel(todo.dueDate)}
-          </span>
-
-          {/* Priority */}
-          {!todo.completed && (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: '12px',
-              color: pInfo.dot,
-              fontWeight: 500,
-              minWidth: 55,
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: pInfo.dot }} />
-              <span>{pInfo.label}</span>
-            </div>
-          )}
+          </div>
 
           {/* Actions */}
-          <div style={{ display: 'inline-flex', gap: 2 }}>
+          <div style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
             <button
               onClick={() => setEditingTask(todo)}
               className="btn-icon"
@@ -208,6 +172,44 @@ export const TodoView = () => {
               <Trash2 size={12} strokeWidth={1.75} />
             </button>
           </div>
+        </div>
+
+        {/* Metadata row: Tag, Date, Priority */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 26, flexWrap: 'wrap' }}>
+          {/* Subject tag pill if present */}
+          {todo.tag && (
+            <span style={{
+              fontSize: '11px',
+              padding: '2px 8px',
+              borderRadius: 4,
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-muted)',
+              fontWeight: 500,
+            }}>
+              {todo.tag}
+            </span>
+          )}
+
+          {/* Date */}
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            {formatDateLabel(todo.dueDate)}
+          </span>
+
+          {/* Priority */}
+          {!todo.completed && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              fontSize: '11px',
+              color: pInfo.dot,
+              fontWeight: 500,
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: pInfo.dot }} />
+              <span>{pInfo.label}</span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -303,16 +305,9 @@ export const TodoView = () => {
       </div>
 
       {/* ── Main Layout: Task List (Left) + 300px Panel (Right) ── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 300px',
-        gap: 20,
-        alignItems: 'flex-start',
-      }}
-      className="tasks-layout-grid"
-      >
+      <div className="tasks-layout-grid">
         {/* Left Column: Grouped Task List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
           {filtered.length === 0 ? (
             <div className="card" style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
               No tasks found for this view.
@@ -371,7 +366,7 @@ export const TodoView = () => {
         </div>
 
         {/* Right Column: 300px Panel (Page 3 in PDF) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
           {/* Card: Completion */}
           <div className="card">
             <div className="card-title" style={{ marginBottom: 12 }}>

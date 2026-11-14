@@ -12,12 +12,14 @@ import {
   AlertCircle,
   ExternalLink,
   Sparkles,
+  ArrowLeft,
+  Settings,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 
 export const ProfileView = () => {
-  const { profile, updateProfile, showToast } = useApp();
+  const { profile, updateProfile, showToast, setActivePage } = useApp();
   const {
     currentUser,
     logout,
@@ -160,7 +162,54 @@ export const ProfileView = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 720 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', maxWidth: 720, boxSizing: 'border-box' }}>
+      {/* ── Mobile Top Navigation Bar (<768px) ── */}
+      <div
+        className="mobile-only-flex"
+        style={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingBottom: 12,
+          borderBottom: '1px solid var(--border)',
+          gap: 10,
+          width: '100%',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setActivePage('dashboard')}
+          className="btn btn-secondary"
+          style={{
+            height: 34,
+            padding: '0 12px',
+            fontSize: '0.75rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <ArrowLeft size={14} />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActivePage('settings')}
+          className="btn btn-secondary"
+          style={{
+            height: 34,
+            padding: '0 12px',
+            fontSize: '0.75rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Settings size={14} />
+          <span>Settings</span>
+        </button>
+      </div>
+
       {/* ── Page Header ── */}
       <div>
         <h1 style={{
@@ -391,30 +440,30 @@ export const ProfileView = () => {
             </div>
           </form>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
-            <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-control)', background: 'var(--bg-canvas)', border: '1px solid var(--border)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 12 }}>
+            <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-control)', background: 'var(--bg-canvas)', border: '1px solid var(--border)', minWidth: 0 }}>
               <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, display: 'block' }}>
                 Full Name
               </span>
-              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', marginTop: 4, display: 'block' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', marginTop: 4, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {displayName}
               </span>
             </div>
 
-            <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-control)', background: 'var(--bg-canvas)', border: '1px solid var(--border)' }}>
+            <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-control)', background: 'var(--bg-canvas)', border: '1px solid var(--border)', minWidth: 0 }}>
               <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, display: 'block' }}>
                 Email Address
               </span>
-              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', marginTop: 4, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', marginTop: 4, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {email}
               </span>
             </div>
 
-            <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-control)', background: 'var(--bg-canvas)', border: '1px solid var(--border)' }}>
+            <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-control)', background: 'var(--bg-canvas)', border: '1px solid var(--border)', minWidth: 0 }}>
               <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600, display: 'block' }}>
                 Account Created
               </span>
-              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', marginTop: 4, display: 'block' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)', marginTop: 4, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {memberSince}
               </span>
             </div>
@@ -537,7 +586,7 @@ export const ProfileView = () => {
           {/* Password Reset */}
           <div style={{
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'space-between',
             padding: '14px 16px',
             borderRadius: 'var(--radius-control)',
@@ -545,8 +594,10 @@ export const ProfileView = () => {
             background: 'var(--bg-canvas)',
             flexWrap: 'wrap',
             gap: 12,
+            width: '100%',
+            boxSizing: 'border-box',
           }}>
-            <div>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-primary)' }}>
                 Password Management
               </div>
@@ -557,7 +608,7 @@ export const ProfileView = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', width: 'auto' }}>
               <button
                 type="button"
                 onClick={handleSendResetEmail}

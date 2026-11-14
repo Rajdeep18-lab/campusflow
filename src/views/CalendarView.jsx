@@ -146,16 +146,9 @@ export const CalendarView = () => {
       </div>
 
       {/* ── Main Layout: Calendar Grid (Left) + 300px Day Details (Right) ── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 300px',
-        gap: 20,
-        alignItems: 'flex-start',
-      }}
-      className="cal-layout-grid"
-      >
+      <div className="cal-layout-grid">
         {/* Left Column: Calendar Grid Card */}
-        <div className="card" style={{ padding: '16px' }}>
+        <div className="card" style={{ padding: '16px', minWidth: 0, overflow: 'hidden' }}>
           {/* Weekday headers */}
           <div style={{
             display: 'grid',
@@ -181,9 +174,11 @@ export const CalendarView = () => {
                 return (
                   <div
                     key={`empty-${idx}`}
+                    className="cal-day-cell"
                     style={{
-                      minHeight: 82,
                       border: '1px solid transparent',
+                      background: 'transparent',
+                      cursor: 'default',
                     }}
                   />
                 );
@@ -198,23 +193,16 @@ export const CalendarView = () => {
                 <div
                   key={dateStr}
                   onClick={() => setSelectedDateStr(dateStr)}
+                  className="cal-day-cell"
                   style={{
-                    minHeight: 82,
-                    padding: '6px',
-                    borderRadius: 'var(--radius-control)',
                     border: isSelected
                       ? '2px solid var(--accent)'
                       : '1px solid var(--border)',
                     background: isSelected ? 'var(--accent-subtle)' : 'var(--bg-surface)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 4,
-                    transition: 'all 0.1s ease',
                   }}
                 >
                   {/* Top: Day number */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                     {isToday ? (
                       <span style={{
                         width: 22,
@@ -228,6 +216,7 @@ export const CalendarView = () => {
                         fontSize: '0.75rem',
                         fontWeight: 600,
                         lineHeight: 1,
+                        flexShrink: 0,
                       }}>
                         {day}
                       </span>
@@ -237,29 +226,29 @@ export const CalendarView = () => {
                         fontWeight: isSelected ? 600 : 500,
                         color: 'var(--text-primary)',
                         paddingLeft: 2,
+                        flexShrink: 0,
                       }}>
                         {day}
                       </span>
                     )}
 
-                    {/* Spending tag */}
+                    {/* Desktop Spending tag */}
                     {dayData.totalSpent > 0 && (
-                      <span style={{
-                        display: 'flex',
+                      <span className="desktop-only-flex" style={{
                         alignItems: 'center',
                         gap: 3,
                         fontSize: '0.6875rem',
                         fontWeight: 500,
                         color: '#A06A15',
-                      }} className="num">
+                      }}>
                         <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#A06A15' }} />
-                        {formatCurrency(dayData.totalSpent)}
+                        <span className="num">{formatCurrency(dayData.totalSpent)}</span>
                       </span>
                     )}
                   </div>
 
-                  {/* Deadline chips */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
+                  {/* Desktop Deadline chips */}
+                  <div className="desktop-only" style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
                     {dayData.todos.slice(0, 2).map(t => (
                       <div
                         key={t.id}
@@ -283,6 +272,22 @@ export const CalendarView = () => {
                       <div style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', paddingLeft: 2 }}>
                         +{dayData.todos.length - 2} more
                       </div>
+                    )}
+                  </div>
+
+                  {/* Mobile Indicator Dots */}
+                  <div className="mobile-only-flex" style={{ alignItems: 'center', justifyContent: 'center', gap: 3, marginTop: 'auto' }}>
+                    {dayData.totalSpent > 0 && (
+                      <span
+                        style={{ width: 5, height: 5, borderRadius: '50%', background: '#A06A15', flexShrink: 0 }}
+                        title={`Spent ${formatCurrency(dayData.totalSpent)}`}
+                      />
+                    )}
+                    {dayData.todos.length > 0 && (
+                      <span
+                        style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }}
+                        title={`${dayData.todos.length} deadline(s)`}
+                      />
                     )}
                   </div>
                 </div>

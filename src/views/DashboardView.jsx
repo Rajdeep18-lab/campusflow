@@ -243,12 +243,13 @@ export const DashboardView = () => {
       {/* ── Main 2-Column Layout ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
         gap: 20,
         alignItems: 'flex-start',
+        width: '100%',
       }}>
         {/* ── LEFT COLUMN ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
           {/* Card: Spending this month */}
           <div className="card">
             <div className="card-header">
@@ -263,9 +264,10 @@ export const DashboardView = () => {
               height: 120,
               display: 'flex',
               alignItems: 'flex-end',
-              gap: 6,
+              gap: currentDay > 15 ? 2 : 4,
               paddingTop: 16,
               paddingBottom: 4,
+              overflow: 'hidden',
             }}>
               {dailyBars.map(({ day, amount, isToday }) => {
                 const heightPct = maxDayAmount > 0 ? Math.max((amount / maxDayAmount) * 100, 4) : 4;
@@ -376,7 +378,7 @@ export const DashboardView = () => {
         </div>
 
         {/* ── RIGHT COLUMN ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
           {/* Card: Today's priorities */}
           <div className="card">
             <div className="card-header">

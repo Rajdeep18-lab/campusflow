@@ -13,6 +13,7 @@ import {
   Globe,
   Palette,
   Check,
+  ArrowLeft,
 } from 'lucide-react';
 import { useApp, defaultPreferences, CURRENCY_SYMBOLS } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
@@ -116,7 +117,54 @@ export const SettingsView = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 720 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%', maxWidth: 720, boxSizing: 'border-box' }}>
+      {/* ── Mobile Top Navigation Bar (<768px) ── */}
+      <div
+        className="mobile-only-flex"
+        style={{
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingBottom: 12,
+          borderBottom: '1px solid var(--border)',
+          gap: 10,
+          width: '100%',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setActivePage('dashboard')}
+          className="btn btn-secondary"
+          style={{
+            height: 34,
+            padding: '0 12px',
+            fontSize: '0.75rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <ArrowLeft size={14} />
+          <span>Dashboard</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActivePage('profile')}
+          className="btn btn-secondary"
+          style={{
+            height: 34,
+            padding: '0 12px',
+            fontSize: '0.75rem',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <User size={14} />
+          <span>Profile</span>
+        </button>
+      </div>
+
       {/* ── Page Header ── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
@@ -234,7 +282,7 @@ export const SettingsView = () => {
           Set your preferred display currency and calendar formatting. Existing amounts remain intact without currency conversion.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 14 }}>
           {/* Currency selection */}
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
@@ -338,7 +386,7 @@ export const SettingsView = () => {
           Speed up logging by pre-selecting your most common category and payment method.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 14 }}>
           {/* Default Category */}
           <div>
             <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
@@ -501,7 +549,7 @@ export const SettingsView = () => {
           Export your complete account data or generate a financial PDF statement.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 12 }}>
           {/* Download PDF report button */}
           <button
             type="button"

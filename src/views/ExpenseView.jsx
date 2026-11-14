@@ -210,10 +210,10 @@ export const ExpenseView = () => {
           gap: 10,
           flexWrap: 'wrap',
           flex: 1,
-          minWidth: 260,
+          minWidth: 0,
         }}>
           {/* Search bar */}
-          <div style={{ position: 'relative', width: 220 }}>
+          <div style={{ position: 'relative', width: '100%', maxWidth: 260 }}>
             <Search
               size={14}
               color="var(--text-secondary)"
@@ -226,7 +226,7 @@ export const ExpenseView = () => {
               onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               placeholder="Search expenses, payment..."
               className="form-input"
-              style={{ paddingLeft: 30, height: 34, fontSize: '0.8125rem' }}
+              style={{ paddingLeft: 30, height: 34, fontSize: '0.8125rem', width: '100%' }}
             />
           </div>
 
@@ -282,7 +282,7 @@ export const ExpenseView = () => {
       </div>
 
       {/* ── Desktop Table View (>= 768px) ── */}
-      <div className="card hidden md:block" style={{ padding: 0, overflow: 'hidden' }}>
+      <div className="card desktop-only" style={{ padding: 0, overflow: 'hidden' }}>
         {paginated.length === 0 ? (
           <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
             No expenses found. Try adjusting your search or filters.
@@ -419,7 +419,7 @@ export const ExpenseView = () => {
       </div>
 
       {/* ── Mobile Grouped List View (< 768px) ── */}
-      <div className="block md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div className="mobile-only-flex" style={{ flexDirection: 'column', gap: 14, width: '100%' }}>
         {Object.keys(groupedByDate).length === 0 ? (
           <div className="card" style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
             No expenses found.
