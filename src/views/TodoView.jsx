@@ -1,350 +1,436 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  CheckSquare,
   Plus,
   Search,
+  Pencil,
   Trash2,
-  Edit3,
-  CalendarDays,
   CheckCircle2,
-  Clock,
-  ClipboardList,
-  AlertTriangle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { EmptyState } from '../components/EmptyState';
-
-const PRIORITY_CONFIG = {
-  High:   { color: 'var(--color-danger)', bg: 'var(--color-danger-bg)', border: 'rgba(200,70,48,0.25)' },
-  Medium: { color: 'var(--color-info)',   bg: 'var(--color-info-bg)',   border: 'rgba(60,110,113,0.25)' },
-  Low:    { color: 'var(--accent)',       bg: 'var(--accent-muted)',    border: 'var(--accent-border)' },
-};
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-};
 
 export const TodoView = () => {
   const {
     todos,
+    setIsTaskModalOpen,
+    setEditingTask,
     toggleTodoCompleted,
     deleteTodo,
-    setEditingTask,
-    setIsTaskModalOpen,
-    pendingTasksCount,
-    completedTasksCount,
-    totalTasksCount,
-    taskCompletionPercent,
   } = useApp();
 
-  const [activeTab,      setActiveTab]      = useState('all');
-  const [searchTerm,     setSearchTerm]     = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('All');
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-  const isOverdue = (todo) =>
-    !todo.completed && todo.dueDate && todo.dueDate < todayStr;
+  // Filters
+  const [activeSegment, setActiveSegment] = useState('all'); // 'all' | 'pending' | 'today' | 'overdue' | 'done'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('all'); // 'all' | 'High' | 'Medium' | 'Low'
 
-  const filteredTodos = todos.filter(todo => {
-    if (activeTab === 'today'     && todo.dueDate !== todayStr) return false;
-    if (activeTab === 'pending'   && todo.completed)            return false;
-    if (activeTab === 'completed' && !todo.completed)           return false;
-    if (activeTab === 'overdue'   && !isOverdue(todo))          return false;
-    if (priorityFilter !== 'All'  && todo.priority !== priorityFilter) return false;
-    if (searchTerm.trim()) {
-      const q = searchTerm.toLowerCase();
-      return todo.title.toLowerCase().includes(q) ||
-             todo.priority.toLowerCase().includes(q) ||
-             (todo.dueDate && todo.dueDate.includes(q));
-    }
-    return true;
-  });
+  // Counts
+  const totalCount = todos.length;
+  const pendingList = todos.filter(t => !t.completed);
+  const doneList = todos.filter(t => t.completed);
+  const todayList = todos.filter(t => t.dueDate === todayStr);
+  const overdueList = todos.filter(t => !t.completed && t.dueDate && t.dueDate < todayStr);
 
-  const overdueCnt = todos.filter(t => isOverdue(t)).length;
+  const pendingCount = pendingList.length;
+  const doneCount = doneList.length;
+  const todayCount = todayList.length;
+  const overdueCount = overdueList.length;
 
-  const getDueDateLabel = (todo) => {
-    if (todo.completed) return null;
-    if (!todo.dueDate) return null;
-    if (todo.dueDate < todayStr) return { text: 'Overdue', cls: 'badge badge-overdue' };
-    if (todo.dueDate === todayStr) return { text: 'Due Today', cls: 'badge badge-today' };
-    return null;
+  const highCount = pendingList.filter(t => t.priority === 'High').length;
+  const mediumCount = pendingList.filter(t => t.priority === 'Medium').length;
+  const lowCount = pendingList.filter(t => t.priority === 'Low').length;
+
+  // Filtered tasks
+  const filtered = useMemo(() => {
+    return todos.filter(t => {
+      // Segment filter
+      if (activeSegment === 'pending' && t.completed) return false;
+      if (activeSegment === 'done' && !t.completed) return false;
+      if (activeSegment === 'today' && t.dueDate !== todayStr) return false;
+      if (activeSegment === 'overdue' && (t.completed || !t.dueDate || t.dueDate >= todayStr)) return false;
+
+      // Search term
+      if (searchTerm) {
+        const q = searchTerm.toLowerCase();
+        const matchesTitle = (t.title || '').toLowerCase().includes(q);
+        const matchesTag = (t.tag || '').toLowerCase().includes(q);
+        if (!matchesTitle && !matchesTag) return false;
+      }
+
+      // Priority filter
+      if (priorityFilter !== 'all' && t.priority !== priorityFilter) return false;
+
+      return true;
+    });
+  }, [todos, activeSegment, searchTerm, priorityFilter, todayStr]);
+
+  // Group into Today, Tomorrow, Later, Completed
+  const groupedTasks = useMemo(() => {
+    const groups = {
+      today: [],
+      tomorrow: [],
+      later: [],
+      completed: [],
+    };
+
+    filtered.forEach(t => {
+      if (t.completed) {
+        groups.completed.push(t);
+      } else if (t.dueDate === todayStr || (t.dueDate && t.dueDate < todayStr)) {
+        groups.today.push(t);
+      } else if (t.dueDate === tomorrowStr) {
+        groups.tomorrow.push(t);
+      } else {
+        groups.later.push(t);
+      }
+    });
+
+    return groups;
+  }, [filtered, todayStr, tomorrowStr]);
+
+  const formatDateLabel = (dateStr) => {
+    if (!dateStr) return '';
+    if (dateStr === todayStr) return 'Today';
+    if (dateStr === tomorrowStr) return 'Tomorrow';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+
+  const getPriorityInfo = (p) => {
+    if (p === 'High') return { dot: '#B42318', label: 'High' };
+    if (p === 'Medium') return { dot: '#A06A15', label: 'Medium' };
+    return { dot: '#2E7D4F', label: 'Low' };
+  };
+
+  const completionPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  const renderTaskRow = (todo) => {
+    const pInfo = getPriorityInfo(todo.priority);
+    return (
+      <div
+        key={todo.id}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          borderBottom: '1px solid var(--border-subtle)',
+          gap: 12,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+          <input
+            type="checkbox"
+            checked={todo.completed}
+            onChange={() => toggleTodoCompleted(todo.id)}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: 4,
+              cursor: 'pointer',
+              accentColor: 'var(--accent-solid)',
+              flexShrink: 0,
+            }}
+          />
+          <span style={{
+            fontSize: '13px',
+            fontWeight: 400,
+            color: todo.completed ? 'var(--text-muted)' : 'var(--text)',
+            textDecoration: todo.completed ? 'line-through' : 'none',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
+            {todo.title}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          {/* Subject tag pill if present */}
+          {todo.tag && (
+            <span style={{
+              fontSize: '11px',
+              padding: '2px 8px',
+              borderRadius: 4,
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-muted)',
+              fontWeight: 500,
+            }}>
+              {todo.tag}
+            </span>
+          )}
+
+          {/* Date */}
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            {formatDateLabel(todo.dueDate)}
+          </span>
+
+          {/* Priority */}
+          {!todo.completed && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              fontSize: '12px',
+              color: pInfo.dot,
+              fontWeight: 500,
+              minWidth: 55,
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: pInfo.dot }} />
+              <span>{pInfo.label}</span>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: 'inline-flex', gap: 2 }}>
+            <button
+              onClick={() => setEditingTask(todo)}
+              className="btn-icon"
+              style={{ width: 26, height: 26 }}
+              title="Edit"
+            >
+              <Pencil size={12} strokeWidth={1.75} />
+            </button>
+            <button
+              onClick={() => deleteTodo(todo.id)}
+              className="btn-icon"
+              style={{ width: 26, height: 26 }}
+              title="Delete"
+              onMouseEnter={e => e.currentTarget.style.color = 'var(--danger)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+            >
+              <Trash2 size={12} strokeWidth={1.75} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* ── Page Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
-            Task Manager
+          <h1 style={{
+            fontSize: '22px',
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            color: 'var(--text)',
+            lineHeight: 1.25,
+          }}>
+            Tasks
           </h1>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-            Organize assignments, exams, labs, and personal study goals.
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
+            {pendingCount} pending, {doneCount} completed
           </p>
         </div>
-        <button onClick={() => setIsTaskModalOpen(true)} className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
-          <Plus size={14} strokeWidth={2.5} />
-          Create Task
+
+        <button
+          onClick={() => setIsTaskModalOpen(true)}
+          className="btn btn-primary"
+        >
+          <Plus size={14} strokeWidth={2} />
+          <span>Add task</span>
         </button>
       </div>
 
-      {/* ── Stat Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(175px, 1fr))', gap: 12 }}>
-        {[
-          { label: 'Total Tasks', value: totalTasksCount, sub: 'All recorded', icon: ClipboardList, iconBg: 'var(--accent-muted)', iconColor: 'var(--accent)' },
-          { label: 'Pending', value: pendingTasksCount, sub: 'Awaiting completion', icon: Clock, iconBg: 'rgba(60,110,113,0.12)', iconColor: 'var(--color-info)' },
-          { label: 'Completed', value: completedTasksCount, sub: `${taskCompletionPercent}% done`, icon: CheckCircle2, iconBg: 'var(--accent-muted)', iconColor: 'var(--accent)' },
-          { label: 'Overdue', value: overdueCnt, sub: overdueCnt > 0 ? 'Needs immediate attention' : 'All clear 🎉', icon: AlertTriangle, iconBg: 'var(--color-danger-bg)', iconColor: 'var(--color-danger)' },
-        ].map(({ label, value, sub, icon: Icon, iconBg, iconColor }) => (
-          <div key={label} className="stat-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <span className="stat-label">{label}</span>
-              <div className="stat-icon-box" style={{ background: iconBg }}>
-                <Icon size={16} color={iconColor} strokeWidth={2} />
-              </div>
-            </div>
-            <div className="stat-value" style={{ fontFamily: 'var(--font-mono)' }}>{value}</div>
-            <div className="stat-sub">{sub}</div>
-          </div>
-        ))}
-      </div>
+      {/* ── Filter Bar ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        flexWrap: 'wrap',
+      }}>
+        {/* Segmented control */}
+        <div className="segmented-control" style={{ overflowX: 'auto', maxWidth: '100%' }}>
+          {[
+            { id: 'all',     label: 'All',     count: totalCount },
+            { id: 'pending', label: 'Pending', count: pendingCount },
+            { id: 'today',   label: 'Today',   count: todayCount },
+            { id: 'overdue', label: 'Overdue', count: overdueCount },
+            { id: 'done',    label: 'Done',    count: doneCount },
+          ].map(seg => (
+            <button
+              key={seg.id}
+              onClick={() => setActiveSegment(seg.id)}
+              className={`segment-btn${activeSegment === seg.id ? ' active' : ''}`}
+            >
+              <span>{seg.label}</span>
+              <span className="segment-count">{seg.count}</span>
+            </button>
+          ))}
+        </div>
 
-      {/* Completion progress */}
-      {totalTasksCount > 0 && (
-        <div className="card" style={{ padding: '16px 20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Overall Task Completion</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', fontWeight: 700, color: taskCompletionPercent >= 80 ? 'var(--accent)' : 'var(--text-primary)' }}>
-              {completedTasksCount} / {totalTasksCount} ({taskCompletionPercent}%)
-            </span>
-          </div>
-          <div className="progress-track" style={{ height: 8 }}>
-            <div
-              className="progress-fill"
-              style={{
-                width: `${taskCompletionPercent}%`,
-                background: 'var(--accent)',
-              }}
+        {/* Search & Priority filters */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: 200 }}>
+            <Search
+              size={14}
+              color="var(--text-muted)"
+              strokeWidth={1.75}
+              style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}
+            />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search tasks"
+              className="form-input"
+              style={{ paddingLeft: 30, height: 34, fontSize: '13px' }}
             />
           </div>
-        </div>
-      )}
 
-      {/* ── Controls ── */}
-      <div className="card" style={{ padding: '14px 16px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {/* Tabs */}
-          <div className="tab-group" style={{ overflowX: 'auto', scrollbarWidth: 'none' }}>
-            {[
-              { id: 'all',       label: `All (${totalTasksCount})` },
-              { id: 'pending',   label: `Pending (${pendingTasksCount})` },
-              { id: 'today',     label: `Today (${todos.filter(t => t.dueDate === todayStr).length})` },
-              { id: 'overdue',   label: `Overdue (${overdueCnt})` },
-              { id: 'completed', label: `Completed (${completedTasksCount})` },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`tab-item${activeTab === tab.id ? ' active' : ''}`}
-                style={{ position: 'relative' }}
-              >
-                {tab.label}
-                {tab.id === 'overdue' && overdueCnt > 0 && (
-                  <span style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: 'var(--color-danger)',
-                    position: 'absolute',
-                    top: 4,
-                    right: 4,
-                  }} />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Search + Priority Filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', flex: 1, minWidth: 180 }}>
-              <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                placeholder="Search tasks by title or due date..."
-                className="form-input"
-                style={{ paddingLeft: 34, height: 38, width: '100%', fontSize: '0.8125rem' }}
-              />
-            </div>
-            <select
-              value={priorityFilter}
-              onChange={e => setPriorityFilter(e.target.value)}
-              className="form-select"
-              style={{ height: 38, width: 'auto', fontSize: '0.8125rem', paddingRight: 28, flexShrink: 0 }}
-            >
-              <option value="All">All Priorities</option>
-              <option value="High">🔴 High Priority</option>
-              <option value="Medium">🔵 Medium Priority</option>
-              <option value="Low">🟢 Low Priority</option>
-            </select>
-          </div>
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="form-input"
+            style={{ height: 34, padding: '0 8px', fontSize: '12px', width: 'auto', cursor: 'pointer' }}
+          >
+            <option value="all">Priority: Any</option>
+            <option value="High">Priority: High</option>
+            <option value="Medium">Priority: Medium</option>
+            <option value="Low">Priority: Low</option>
+          </select>
         </div>
       </div>
 
-      {/* ── Task List ── */}
-      {filteredTodos.length === 0 ? (
-        <EmptyState
-          icon={activeTab === 'completed' ? CheckCircle2 : CheckSquare}
-          title={
-            todos.length === 0 ? 'No tasks yet' :
-            activeTab === 'completed' ? 'No completed tasks yet' :
-            activeTab === 'overdue' ? 'No overdue tasks 🎉' :
-            'No matching tasks'
-          }
-          description={
-            todos.length === 0
-              ? 'Create your first task to stay organized and ahead of deadlines.'
-              : activeTab === 'overdue'
-              ? 'Great job — you have completed all pending deadlines!'
-              : 'Try switching tabs or adjusting search filters.'
-          }
-          actionLabel={todos.length === 0 ? 'Create First Task' : undefined}
-          onAction={todos.length === 0 ? () => setIsTaskModalOpen(true) : undefined}
-        />
-      ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
-          {filteredTodos.map((todo, i) => {
-            const pc      = PRIORITY_CONFIG[todo.priority] || PRIORITY_CONFIG.Low;
-            const overdue = isOverdue(todo);
-            const dlLabel = getDueDateLabel(todo);
-
-            return (
-              <div
-                key={todo.id}
-                className="task-card"
-                style={{
-                  padding: '14px 18px',
-                  borderBottom: i < filteredTodos.length - 1 ? '1px solid var(--border-base)' : 'none',
-                  borderLeftColor: pc.color,
-                  opacity: todo.completed ? 0.65 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 14,
-                }}
-              >
-                {/* Custom animated checkbox with touch target */}
-                <button
-                  onClick={() => toggleTodoCompleted(todo.id)}
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 6,
-                    border: `2px solid ${todo.completed ? 'var(--accent)' : pc.color}`,
-                    background: todo.completed ? 'var(--accent)' : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    transition: 'all 0.15s cubic-bezier(0.16,1,0.3,1)',
-                    padding: 0,
-                  }}
-                  title={todo.completed ? 'Mark as pending' : 'Mark as done'}
-                >
-                  {todo.completed && (
-                    <svg width="12" height="10" viewBox="0 0 11 9" fill="none">
-                      <path d="M1 4L4 7L10 1" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
-
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      letterSpacing: '-0.01em',
-                      color: todo.completed ? 'var(--text-muted)' : overdue ? 'var(--color-danger)' : 'var(--text-primary)',
-                      textDecoration: todo.completed ? 'line-through' : 'none',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      minWidth: 0,
-                      flex: '1 1 auto',
-                    }}>
-                      {todo.title}
-                    </span>
-                    {/* Priority badge */}
-                    <span style={{
-                      fontSize: '0.625rem',
-                      fontWeight: 700,
-                      color: pc.color,
-                      background: pc.bg,
-                      border: `1px solid ${pc.border}`,
-                      padding: '2px 8px',
-                      borderRadius: 20,
-                      flexShrink: 0,
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {todo.priority}
-                    </span>
-                    {/* Due date label (overdue / today) */}
-                    {dlLabel && (
-                      <span className={`badge ${dlLabel.cls}`} style={{ fontSize: '0.625rem', padding: '2px 8px', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                        {dlLabel.text}
-                      </span>
-                    )}
+      {/* ── Main Layout: Task List (Left) + 300px Panel (Right) ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 300px',
+        gap: 20,
+        alignItems: 'flex-start',
+      }}
+      className="tasks-layout-grid"
+      >
+        {/* Left Column: Grouped Task List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {filtered.length === 0 ? (
+            <div className="card" style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+              No tasks found for this view.
+            </div>
+          ) : (
+            <>
+              {/* Today Section */}
+              {groupedTasks.today.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6, paddingLeft: 2 }}>
+                    Today <span style={{ color: 'var(--text-disabled)' }}>{groupedTasks.today.length}</span>
                   </div>
-                  {/* Due date */}
-                  <div style={{
-                    marginTop: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: '0.72rem',
-                    color: overdue ? 'var(--color-danger)' : 'var(--text-muted)',
-                    fontWeight: overdue ? 600 : 400,
-                    fontFamily: 'var(--font-mono)',
-                  }}>
-                    <CalendarDays size={12} />
-                    <span>Due {formatDate(todo.dueDate)}</span>
-                    {todo.completed && (
-                      <span style={{ marginLeft: 6, color: 'var(--accent)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <CheckCircle2 size={12} /> Completed
-                      </span>
-                    )}
+                  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    {groupedTasks.today.map(renderTaskRow)}
                   </div>
                 </div>
+              )}
 
-                {/* Actions */}
-                <div style={{ display: 'flex', gap: 2, flexShrink: 0, alignItems: 'center' }}>
-                  <button
-                    onClick={() => setEditingTask(todo)}
-                    className="btn-icon"
-                    style={{ color: 'var(--accent)', minWidth: 34, minHeight: 34 }}
-                    title="Edit task"
-                  >
-                    <Edit3 size={14} />
-                  </button>
-                  <button
-                    onClick={() => deleteTodo(todo.id)}
-                    className="btn-icon"
-                    style={{ color: 'var(--color-danger)', minWidth: 34, minHeight: 34 }}
-                    title="Delete task"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+              {/* Tomorrow Section */}
+              {groupedTasks.tomorrow.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6, paddingLeft: 2 }}>
+                    Tomorrow <span style={{ color: 'var(--text-disabled)' }}>{groupedTasks.tomorrow.length}</span>
+                  </div>
+                  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    {groupedTasks.tomorrow.map(renderTaskRow)}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              )}
+
+              {/* Later Section */}
+              {groupedTasks.later.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6, paddingLeft: 2 }}>
+                    Later <span style={{ color: 'var(--text-disabled)' }}>{groupedTasks.later.length}</span>
+                  </div>
+                  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    {groupedTasks.later.map(renderTaskRow)}
+                  </div>
+                </div>
+              )}
+
+              {/* Completed Section */}
+              {groupedTasks.completed.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6, paddingLeft: 2 }}>
+                    Completed <span style={{ color: 'var(--text-disabled)' }}>{groupedTasks.completed.length}</span>
+                  </div>
+                  <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                    {groupedTasks.completed.map(renderTaskRow)}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
-      )}
+
+        {/* Right Column: 300px Panel (Page 3 in PDF) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Card: Completion */}
+          <div className="card">
+            <div className="card-title" style={{ marginBottom: 12 }}>
+              Completion
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <span style={{ fontSize: '24px', fontWeight: 600, color: 'var(--text)', fontFeatureSettings: '"tnum" 1' }}>
+                {doneCount} of {totalCount}
+              </span>
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                done
+              </span>
+            </div>
+
+            {/* 4px green progress bar */}
+            <div style={{
+              width: '100%',
+              height: 4,
+              borderRadius: 2,
+              background: 'var(--surface-2)',
+              marginTop: 12,
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                borderRadius: 2,
+                width: `${completionPct}%`,
+                background: 'var(--accent-solid)',
+                transition: 'width 0.4s ease',
+              }} />
+            </div>
+          </div>
+
+          {/* Card: Pending by priority */}
+          <div className="card">
+            <div className="card-title" style={{ marginBottom: 12 }}>
+              Pending by priority
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { label: 'High',   count: highCount,   dot: '#B42318' },
+                { label: 'Medium', count: mediumCount, dot: '#A06A15' },
+                { label: 'Low',    count: lowCount,    dot: '#2E7D4F' },
+              ].map(({ label, count, dot }) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '13px', color: 'var(--text)' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot }} />
+                    <span>{label}</span>
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', fontFeatureSettings: '"tnum" 1' }}>
+                    {count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

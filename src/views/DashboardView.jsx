@@ -1,92 +1,7 @@
-import React, { useState } from 'react';
-import {
-  CreditCard,
-  CheckSquare,
-  Plus,
-  Trash2,
-  TrendingUp,
-  PiggyBank,
-  Target,
-  Clock,
-  ArrowRight,
-  AlertTriangle,
-  CalendarDays,
-} from 'lucide-react';
+import React from 'react';
+import { Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { EmptyState } from '../components/EmptyState';
-
-const CATEGORY_EMOJIS = {
-  Food: '🍲', Travel: '🚌', Books: '📚', Hostel: '🏠',
-  Mess: '🍱', Shopping: '🛍️', Recharge: '📱', Entertainment: '🎬', Others: '💡',
-};
-
-const CATEGORY_COLORS = {
-  Food: '#C77726', Travel: '#4A7C59', Books: '#685B88',
-  Hostel: '#B25D42', Mess: '#2F6B4F', Shopping: '#A85A75',
-  Recharge: '#3C6E71', Entertainment: '#7D688D', Others: '#7A7568',
-};
-
-/* ─── Priority Badge ─── */
-const PriorityBadge = ({ priority }) => {
-  const map = {
-    High:   'badge badge-danger',
-    Medium: 'badge badge-info',
-    Low:    'badge badge-success',
-  };
-  return <span className={map[priority] || 'badge badge-neutral'}>{priority}</span>;
-};
-
-/* ─── Section Header ─── */
-const SectionHeader = ({ icon: Icon, title, subtitle, actions }) => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-    flexWrap: 'wrap',
-    marginBottom: 16,
-  }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{
-        width: 36,
-        height: 36,
-        borderRadius: 'var(--radius-md)',
-        background: 'var(--accent-muted)',
-        border: '1px solid var(--accent-border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <Icon size={18} color="var(--accent)" strokeWidth={2.2} />
-      </div>
-      <div>
-        <h2 style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: '1.125rem',
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          letterSpacing: '-0.02em',
-          lineHeight: 1.2,
-        }}>
-          {title}
-        </h2>
-        <p style={{
-          fontSize: '0.75rem',
-          color: 'var(--text-muted)',
-          marginTop: 2,
-        }}>
-          {subtitle}
-        </p>
-      </div>
-    </div>
-    {actions && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        {actions}
-      </div>
-    )}
-  </div>
-);
+import { useAuth } from '../context/AuthContext';
 
 export const DashboardView = () => {
   const {
@@ -97,494 +12,539 @@ export const DashboardView = () => {
     todayExpensesTotal,
     remainingBudget,
     budgetUsagePercent,
-    taskCompletionPercent,
     setIsQuickAddExpenseOpen,
     setIsTaskModalOpen,
-    setIsBudgetModalOpen,
     setActivePage,
     toggleTodoCompleted,
-    deleteExpense,
-    deleteTodo,
-    isOverBudget,
+    profile,
   } = useApp();
 
-  const [expSearch] = useState('');
-  const [expCat]    = useState('All');
-  const [taskTab]   = useState('all');
+  const { currentUser } = useAuth();
+  const displayName = profile?.name || currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'Rajdeep');
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const todayTasks = todos.filter(t => t.dueDate === todayStr);
-
-  /* Filtered expenses */
-  const filteredExp = expenses.filter(e => {
-    const catOk    = expCat === 'All' || e.category === expCat;
-    const searchOk = !expSearch.trim() ||
-      e.title.toLowerCase().includes(expSearch.toLowerCase()) ||
-      e.category.toLowerCase().includes(expSearch.toLowerCase());
-    return catOk && searchOk;
-  });
-
-  /* Filtered tasks */
-  const filteredTodos = todos.filter(t => {
-    if (taskTab === 'today')     return t.dueDate === todayStr;
-    if (taskTab === 'pending')   return !t.completed;
-    if (taskTab === 'completed') return t.completed;
-    return true;
-  });
-
-  const formattedDateStr = new Date().toLocaleDateString('en-IN', {
+  // Dates
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const dateFormatted = now.toLocaleDateString('en-IN', {
     weekday: 'long',
     day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    month: 'long',
   });
+  const currentMonthNum = now.getMonth();
+  const currentYear = now.getFullYear();
+  const currentDay = now.getDate();
+  const monthAbbr = now.toLocaleDateString('en-IN', { month: 'short' });
+  const monthPrefix = `${currentYear}-${String(currentMonthNum + 1).padStart(2, '0')}`;
+
+  // Transactions data
+  const monthExpenses = expenses.filter(e => e.date && e.date.startsWith(monthPrefix));
+  const monthSpent = monthExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const todayTransactions = expenses.filter(e => e.date === todayStr);
+  const dailyAverage = currentDay > 0 ? Math.round(monthSpent / currentDay) : 0;
+
+  // Daily spending array for chart (days 1 to currentDay)
+  const dailyBars = Array.from({ length: currentDay }, (_, i) => {
+    const dayNum = i + 1;
+    const dateKey = `${monthPrefix}-${String(dayNum).padStart(2, '0')}`;
+    const amount = expenses
+      .filter(e => e.date === dateKey)
+      .reduce((s, e) => s + Number(e.amount || 0), 0);
+    return { day: dayNum, amount, isToday: dayNum === currentDay };
+  });
+  const maxDayAmount = Math.max(...dailyBars.map(d => d.amount), 1);
+
+  // Tasks data
+  const pendingTodos = todos.filter(t => !t.completed);
+  const dueIn2Days = pendingTodos.filter(t => {
+    if (!t.dueDate) return false;
+    const diffDays = Math.ceil((new Date(t.dueDate + 'T00:00:00') - new Date(todayStr + 'T00:00:00')) / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 2;
+  }).length;
+
+  // Next deadline
+  const sortedUpcoming = [...pendingTodos]
+    .filter(t => t.dueDate && t.dueDate >= todayStr)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const nextTask = sortedUpcoming[0];
+
+  const formatRelativeDays = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Math.ceil((new Date(dateStr + 'T00:00:00') - new Date(todayStr + 'T00:00:00')) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Tomorrow';
+    return `In ${diff} days`;
+  };
+
+  const formatTaskDateLabel = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    const dayName = d.toLocaleDateString('en-IN', { weekday: 'short' });
+    const dayVal = d.getDate();
+    const mName = d.toLocaleDateString('en-IN', { month: 'short' });
+    const diff = Math.ceil((d - new Date(todayStr + 'T00:00:00')) / (1000 * 60 * 60 * 24));
+    const rel = diff === 0 ? 'today' : diff === 1 ? 'in 1 day' : `in ${diff} days`;
+    return `${dayName}, ${dayVal} ${mName} · ${rel}`;
+  };
+
+  // Recent transactions (up to 4)
+  const recentTransactions = [...expenses]
+    .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0))
+    .slice(0, 4);
+
+  // Today's priorities
+  const priorityTasks = [...pendingTodos]
+    .sort((a, b) => {
+      const pOrder = { High: 1, Medium: 2, Low: 3 };
+      return (pOrder[a.priority] || 4) - (pOrder[b.priority] || 4);
+    })
+    .slice(0, 3);
+
+  // Upcoming deadlines (up to 3)
+  const upcomingDeadlines = sortedUpcoming.slice(0, 3);
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-
-      {/* ═══════════════════════════════════════════════
-          HERO SNAPSHOT & GREETING BANNER
-         ═══════════════════════════════════════════════ */}
-      <div className="today-snapshot">
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 16,
-        }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <h1 style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: '1.45rem',
-                fontWeight: 800,
-                letterSpacing: '-0.03em',
-                color: 'var(--text-primary)',
-              }}>
-                {getGreeting()}
-              </h1>
-            </div>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-              Today is <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--text-secondary)' }}>{formattedDateStr}</span>. Here is your campus overview.
-            </p>
-          </div>
-
-          {/* Quick Actions */}
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button onClick={() => setIsQuickAddExpenseOpen(true)} className="btn btn-primary btn-sm">
-              <Plus size={14} strokeWidth={2.5} />
-              Add Expense
-            </button>
-            <button onClick={() => setIsTaskModalOpen(true)} className="btn btn-secondary btn-sm">
-              <Plus size={14} strokeWidth={2.5} />
-              Add Task
-            </button>
-          </div>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* ── Page Header ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{
+            fontSize: '22px',
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            color: 'var(--text)',
+            lineHeight: 1.25,
+          }}>
+            {getGreeting()}, {displayName}
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
+            {dateFormatted}
+          </p>
         </div>
 
-        {/* 4 Key Snapshot Metric Chips */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 12,
-          marginTop: 20,
-        }}>
-          {/* Today's Expense */}
-          <div style={{
-            background: 'var(--bg-card)',
-            padding: '14px 16px',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-base)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            boxShadow: 'var(--shadow-xs)',
-          }}>
-            <div>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Today's Spend
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.02em', marginTop: 2 }}>
-                ₹{todayExpensesTotal.toLocaleString('en-IN')}
-              </div>
-            </div>
-            <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--accent-muted)',
-              border: '1px solid var(--accent-border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <TrendingUp size={18} color="var(--accent)" />
-            </div>
-          </div>
-
-          {/* Today's Tasks */}
-          <div style={{
-            background: 'var(--bg-card)',
-            padding: '14px 16px',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-base)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            boxShadow: 'var(--shadow-xs)',
-          }}>
-            <div>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Today's Tasks
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: 2 }}>
-                {todayTasks.filter(t => !t.completed).length} <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)' }}>pending</span>
-              </div>
-            </div>
-            <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 'var(--radius-md)',
-              background: 'rgba(60, 110, 113, 0.12)',
-              border: '1px solid rgba(60, 110, 113, 0.25)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <Clock size={18} color="var(--color-info)" />
-            </div>
-          </div>
-
-          {/* Remaining Budget */}
-          <div
-            onClick={() => setIsBudgetModalOpen(true)}
-            style={{
-              background: 'var(--bg-card)',
-              padding: '14px 16px',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-base)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-              boxShadow: 'var(--shadow-xs)',
-              transition: 'border-color 0.15s',
-            }}
-            title="Click to adjust monthly budget"
+        {/* Desktop Header Buttons */}
+        <div className="hidden md:flex" style={{ gap: 8, alignItems: 'center' }}>
+          <button
+            onClick={() => setIsTaskModalOpen(true)}
+            className="btn btn-secondary"
           >
-            <div>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Budget Left
-              </div>
-              <div style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '1.25rem',
-                fontWeight: 800,
-                color: isOverBudget ? 'var(--color-danger)' : 'var(--text-primary)',
-                letterSpacing: '-0.02em',
-                marginTop: 2,
-              }}>
-                {monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Set Budget'}
-              </div>
-            </div>
-            <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 'var(--radius-md)',
-              background: isOverBudget ? 'var(--color-danger-bg)' : 'var(--accent-muted)',
-              border: `1px solid ${isOverBudget ? 'rgba(200, 70, 48, 0.3)' : 'var(--accent-border)'}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <PiggyBank size={18} color={isOverBudget ? 'var(--color-danger)' : 'var(--accent)'} />
-            </div>
-          </div>
-
-          {/* Task Progress */}
-          <div style={{
-            background: 'var(--bg-card)',
-            padding: '14px 16px',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-base)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-            boxShadow: 'var(--shadow-xs)',
-          }}>
-            <div>
-              <div style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Task Progress
-              </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-0.02em', marginTop: 2 }}>
-                {taskCompletionPercent}% <span style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--text-muted)' }}>done</span>
-              </div>
-            </div>
-            <div style={{
-              width: 38,
-              height: 38,
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--accent-muted)',
-              border: '1px solid var(--accent-border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}>
-              <Target size={18} color="var(--accent)" />
-            </div>
-          </div>
+            <Plus size={14} strokeWidth={2} />
+            <span>Add task</span>
+          </button>
+          <button
+            onClick={() => setIsQuickAddExpenseOpen(true)}
+            className="btn btn-primary"
+          >
+            <Plus size={14} strokeWidth={2} />
+            <span>Add expense</span>
+          </button>
         </div>
-
-        {/* Budget Progress Bar */}
-        {monthlyBudget > 0 && (
-          <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-                Monthly Budget Utilization: <strong style={{ color: 'var(--text-primary)' }}>{budgetUsagePercent}%</strong>
-              </span>
-              {isOverBudget && (
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <AlertTriangle size={13} /> Over Budget
-                </span>
-              )}
-            </div>
-            <div className="progress-track" style={{ height: 8 }}>
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${Math.min(budgetUsagePercent, 100)}%`,
-                  background: isOverBudget ? 'var(--color-danger)' : 'var(--accent)',
-                }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* ═══════════════════════════════════════════════
-          SECTION 1 — RECENT EXPENSES
-         ═══════════════════════════════════════════════ */}
-      <section>
-        <SectionHeader
-          icon={CreditCard}
-          title="Recent Expenses"
-          subtitle="Keep tabs on daily college expenditure"
-          actions={
-            <>
-              <button onClick={() => setIsQuickAddExpenseOpen(true)} className="btn btn-primary btn-sm">
-                <Plus size={13} strokeWidth={2.5} />
-                Log Expense
-              </button>
-              <button onClick={() => setActivePage('expenses')} className="btn btn-secondary btn-sm">
-                View All <ArrowRight size={13} />
-              </button>
-            </>
-          }
-        />
+      {/* Mobile Action Buttons (under greeting) */}
+      <div className="flex md:hidden" style={{ gap: 8 }}>
+        <button
+          onClick={() => setIsQuickAddExpenseOpen(true)}
+          className="btn btn-primary"
+          style={{ flex: 1, height: 42 }}
+        >
+          <Plus size={15} strokeWidth={2} />
+          <span>Expense</span>
+        </button>
+        <button
+          onClick={() => setIsTaskModalOpen(true)}
+          className="btn btn-secondary"
+          style={{ flex: 1, height: 42 }}
+        >
+          <Plus size={15} strokeWidth={2} />
+          <span>Task</span>
+        </button>
+      </div>
 
-        {/* Expenses List Card */}
-        <div className="card" style={{ overflow: 'hidden' }}>
-          {filteredExp.length === 0 ? (
-            <EmptyState
-              icon={CreditCard}
-              title="No expenses logged yet"
-              description="Keep track of food, transport, books, hostel rent and more."
-              actionLabel="Add First Expense"
-              onAction={() => setIsQuickAddExpenseOpen(true)}
-            />
-          ) : (
-            filteredExp.slice(0, 5).map((exp, i) => {
-              const catColor = CATEGORY_COLORS[exp.category] || '#7A7568';
-              const catEmoji = CATEGORY_EMOJIS[exp.category] || '💡';
-              return (
-                <div
-                  key={exp.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '14px 18px',
-                    borderBottom: i < Math.min(filteredExp.length, 5) - 1 ? '1px solid var(--border-base)' : 'none',
-                    borderLeft: `3px solid ${catColor}`,
-                    transition: 'background 0.12s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+      {/* ── Summary Strip (4 cells in 1 container) ── */}
+      <div className="summary-strip">
+        {/* Cell 1: Spent today */}
+        <div className="summary-cell">
+          <div className="summary-label">Spent today</div>
+          <div className="summary-number">
+            ₹{todayExpensesTotal.toLocaleString('en-IN')}
+          </div>
+          <div className="summary-hint">
+            {todayTransactions.length} transaction{todayTransactions.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+
+        {/* Cell 2: Budget remaining */}
+        <div className="summary-cell">
+          <div className="summary-label">Budget remaining</div>
+          <div className="summary-number">
+            ₹{remainingBudget > 0 ? remainingBudget.toLocaleString('en-IN') : (monthlyBudget > 0 ? 0 : '—')}
+          </div>
+          {monthlyBudget > 0 && (
+            <div style={{
+              width: '100%',
+              height: 4,
+              borderRadius: 2,
+              background: 'var(--surface-2)',
+              margin: '6px 0 2px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                borderRadius: 2,
+                width: `${Math.min(budgetUsagePercent, 100)}%`,
+                background: 'var(--accent-solid)',
+                transition: 'width 0.4s ease',
+              }} />
+            </div>
+          )}
+          <div className="summary-hint">
+            {monthlyBudget > 0
+              ? `₹${monthSpent.toLocaleString('en-IN')} of ₹${monthlyBudget.toLocaleString('en-IN')} used`
+              : 'Set monthly budget in Settings'}
+          </div>
+        </div>
+
+        {/* Cell 3: Pending tasks */}
+        <div className="summary-cell">
+          <div className="summary-label">Pending tasks</div>
+          <div className="summary-number">
+            {pendingTodos.length}
+          </div>
+          <div className="summary-hint">
+            {dueIn2Days > 0 ? `${dueIn2Days} due in the next 2 days` : 'No upcoming deadlines soon'}
+          </div>
+        </div>
+
+        {/* Cell 4: Next deadline */}
+        <div className="summary-cell">
+          <div className="summary-label">Next deadline</div>
+          <div style={{
+            fontSize: '15px',
+            fontWeight: 600,
+            color: 'var(--text)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            lineHeight: 1.3,
+            marginTop: 2,
+          }}>
+            {nextTask ? nextTask.title : 'No pending tasks'}
+          </div>
+          <div className="summary-hint">
+            {nextTask ? formatTaskDateLabel(nextTask.dueDate) : 'All caught up!'}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main 2-Column Layout ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: 20,
+        alignItems: 'flex-start',
+      }}>
+        {/* ── LEFT COLUMN ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Card: Spending this month */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Spending this month</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Daily, 1–{currentDay} {monthAbbr} · avg ₹{dailyAverage}
+              </span>
+            </div>
+
+            {/* Daily Bars Chart */}
+            <div style={{
+              height: 120,
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: 6,
+              paddingTop: 16,
+              paddingBottom: 4,
+            }}>
+              {dailyBars.map(({ day, amount, isToday }) => {
+                const heightPct = maxDayAmount > 0 ? Math.max((amount / maxDayAmount) * 100, 4) : 4;
+                return (
+                  <div
+                    key={day}
+                    style={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 4,
+                      height: '100%',
+                      justifyContent: 'flex-end',
+                    }}
+                    title={`Day ${day}: ₹${amount.toLocaleString('en-IN')}`}
+                  >
                     <div style={{
-                      width: 38,
-                      height: 38,
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--bg-tertiary)',
-                      border: '1px solid var(--border-base)',
+                      width: '100%',
+                      minHeight: 4,
+                      height: `${heightPct}%`,
+                      borderRadius: '2px 2px 0 0',
+                      background: isToday ? 'var(--accent-solid)' : 'var(--chart-bar-muted)',
+                      transition: 'height 0.3s ease',
+                    }} />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* X-axis tick markers */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '11px',
+              color: 'var(--text-muted)',
+              paddingTop: 4,
+              borderTop: '1px solid var(--border-subtle)',
+            }}>
+              <span>1</span>
+              {currentDay > 10 && <span>{Math.round(currentDay / 2)}</span>}
+              <span>{currentDay}</span>
+            </div>
+          </div>
+
+          {/* Card: Recent transactions */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Recent transactions</span>
+              <button
+                onClick={() => setActivePage('expenses')}
+                className="card-action-link"
+                style={{ background: 'none', border: 'none', padding: 0 }}
+              >
+                View all
+              </button>
+            </div>
+
+            {recentTransactions.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                No transactions yet. Click "+ Add expense" to record one.
+              </div>
+            ) : (
+              <div>
+                {recentTransactions.map((exp, idx) => (
+                  <div
+                    key={exp.id || idx}
+                    style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.05rem',
-                      flexShrink: 0,
-                    }}>
-                      {catEmoji}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: 'var(--text-primary)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}>
+                      justifyContent: 'space-between',
+                      padding: '10px 0',
+                      borderBottom: idx < recentTransactions.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>
                         {exp.title}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                        <span style={{ fontWeight: 600, color: catColor }}>{exp.category}</span> · <span style={{ fontFamily: 'var(--font-mono)' }}>{exp.date}</span>
-                        {exp.notes && ` · ${exp.notes}`}
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+                        {exp.category}
                       </div>
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    <span style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.9375rem',
-                      fontWeight: 700,
-                      color: 'var(--accent)',
-                      letterSpacing: '-0.02em',
-                    }}>
-                      ₹{exp.amount.toLocaleString('en-IN')}
-                    </span>
-                    <button
-                      onClick={() => deleteExpense(exp.id)}
-                      className="btn-icon"
-                      style={{ color: 'var(--text-muted)' }}
-                      onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
-                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                      title="Delete expense"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════
-          SECTION 2 — ACTIVE TASKS
-         ═══════════════════════════════════════════════ */}
-      <section>
-        <SectionHeader
-          icon={CheckSquare}
-          title="Daily Tasks &amp; Deadlines"
-          subtitle="Stay on track with assignments, exams, and projects"
-          actions={
-            <>
-              <button onClick={() => setIsTaskModalOpen(true)} className="btn btn-secondary btn-sm">
-                <Plus size={13} strokeWidth={2.5} />
-                New Task
-              </button>
-              <button onClick={() => setActivePage('todos')} className="btn btn-secondary btn-sm">
-                View All <ArrowRight size={13} />
-              </button>
-            </>
-          }
-        />
-
-        {/* Tasks List Card */}
-        <div className="card" style={{ overflow: 'hidden' }}>
-          {filteredTodos.length === 0 ? (
-            <EmptyState
-              icon={CheckSquare}
-              title="No tasks scheduled"
-              description="Add your study assignments or project milestones."
-              actionLabel="Create First Task"
-              onAction={() => setIsTaskModalOpen(true)}
-            />
-          ) : (
-            filteredTodos.slice(0, 5).map((todo, i) => {
-              const priorityColors = {
-                High: 'var(--color-danger)',
-                Medium: 'var(--color-info)',
-                Low: 'var(--color-success)',
-              };
-              const pColor = priorityColors[todo.priority] || 'var(--text-muted)';
-              return (
-                <div
-                  key={todo.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '14px 18px',
-                    borderBottom: i < Math.min(filteredTodos.length, 5) - 1 ? '1px solid var(--border-base)' : 'none',
-                    borderLeft: `3px solid ${pColor}`,
-                    opacity: todo.completed ? 0.6 : 1,
-                    transition: 'background 0.12s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                    <input
-                      type="checkbox"
-                      checked={todo.completed}
-                      onChange={() => toggleTodoCompleted(todo.id)}
-                      style={{
-                        width: 18,
-                        height: 18,
-                        accentColor: 'var(--accent)',
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                      }}
-                    />
-                    <div style={{ minWidth: 0 }}>
+                    <div style={{ textAlign: 'right' }}>
                       <div style={{
-                        fontSize: '0.875rem',
+                        fontSize: '13px',
                         fontWeight: 600,
-                        color: todo.completed ? 'var(--text-muted)' : 'var(--text-primary)',
-                        textDecoration: todo.completed ? 'line-through' : 'none',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        color: 'var(--text)',
+                        fontFeatureSettings: '"tnum" 1',
+                        fontVariantNumeric: 'tabular-nums',
                       }}>
-                        {todo.title}
+                        −₹{Number(exp.amount || 0).toLocaleString('en-IN')}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <CalendarDays size={12} /> Due <span style={{ fontFamily: 'var(--font-mono)' }}>{todo.dueDate}</span>
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+                        {exp.date === todayStr ? 'Today' : exp.date}
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-                    <PriorityBadge priority={todo.priority} />
-                    <button
-                      onClick={() => deleteTodo(todo.id)}
-                      className="btn-icon"
-                      style={{ color: 'var(--text-muted)' }}
-                      onMouseEnter={e => e.currentTarget.style.color = 'var(--color-danger)'}
-                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                      title="Delete task"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </section>
 
+        {/* ── RIGHT COLUMN ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Card: Today's priorities */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Today's priorities</span>
+              <button
+                onClick={() => setActivePage('todos')}
+                className="card-action-link"
+                style={{ background: 'none', border: 'none', padding: 0 }}
+              >
+                All tasks
+              </button>
+            </div>
+
+            {priorityTasks.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                No pending tasks. Great job!
+              </div>
+            ) : (
+              <div>
+                {priorityTasks.map((todo, idx) => {
+                  const pColors = {
+                    High:   { dot: '#B42318', label: 'High' },
+                    Medium: { dot: '#A06A15', label: 'Medium' },
+                    Low:    { dot: '#2E7D4F', label: 'Low' },
+                  };
+                  const p = pColors[todo.priority] || pColors.Medium;
+
+                  return (
+                    <div
+                      key={todo.id || idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '12px 0',
+                        borderBottom: idx < priorityTasks.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                        gap: 12,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                        <input
+                          type="checkbox"
+                          checked={todo.completed}
+                          onChange={() => toggleTodoCompleted(todo.id)}
+                          style={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: 4,
+                            cursor: 'pointer',
+                            accentColor: 'var(--accent-solid)',
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{
+                          fontSize: '13px',
+                          fontWeight: 400,
+                          color: todo.completed ? 'var(--text-muted)' : 'var(--text)',
+                          textDecoration: todo.completed ? 'line-through' : 'none',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {todo.title}
+                        </span>
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: '12px',
+                        color: p.dot,
+                        fontWeight: 500,
+                        flexShrink: 0,
+                      }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.dot }} />
+                        <span>{p.label}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Card: Upcoming deadlines */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Upcoming deadlines</span>
+              <button
+                onClick={() => setActivePage('calendar')}
+                className="card-action-link"
+                style={{ background: 'none', border: 'none', padding: 0 }}
+              >
+                Calendar
+              </button>
+            </div>
+
+            {upcomingDeadlines.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                No scheduled deadlines.
+              </div>
+            ) : (
+              <div>
+                {upcomingDeadlines.map((task, idx) => {
+                  const d = new Date(task.dueDate + 'T00:00:00');
+                  const dayNum = d.getDate();
+                  const mAbbr = d.toLocaleDateString('en-IN', { month: 'short' }).toUpperCase();
+                  const relDays = formatRelativeDays(task.dueDate);
+
+                  return (
+                    <div
+                      key={task.id || idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 14,
+                        padding: '10px 0',
+                        borderBottom: idx < upcomingDeadlines.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                      }}
+                    >
+                      {/* Date badge box */}
+                      <div style={{
+                        width: 36,
+                        height: 40,
+                        borderRadius: 7,
+                        background: 'var(--surface-2)',
+                        border: '1px solid var(--border)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}>
+                        <span style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: 'var(--text)',
+                          lineHeight: 1,
+                        }}>
+                          {dayNum}
+                        </span>
+                        <span style={{
+                          fontSize: '9px',
+                          fontWeight: 700,
+                          color: 'var(--text-muted)',
+                          marginTop: 2,
+                          letterSpacing: '0.04em',
+                        }}>
+                          {mAbbr}
+                        </span>
+                      </div>
+
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: 'var(--text)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {task.title}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+                          {relDays}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

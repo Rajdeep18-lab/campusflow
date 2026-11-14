@@ -1,689 +1,481 @@
 import React, { useMemo } from 'react';
 import {
-  BarChart3,
   TrendingUp,
-  Wallet,
-  CheckSquare,
-  Lightbulb,
-  PiggyBank,
-  CalendarDays,
-  Flame,
-  Award,
+  AlertCircle,
+  Check,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { EmptyState } from '../components/EmptyState';
 
-/* ── Category Config ── */
-const CAT_COLORS = {
-  Food: '#C77726',
-  Travel: '#4A7C59',
-  Books: '#685B88',
-  Hostel: '#B25D42',
-  Mess: '#2F6B4F',
-  Shopping: '#A85A75',
-  Recharge: '#3C6E71',
-  Entertainment: '#7D688D',
-  Others: '#7A7568',
-};
-
-const CAT_EMOJIS = {
-  Food: '🍲', Travel: '🚌', Books: '📚', Hostel: '🏠',
-  Mess: '🍱', Shopping: '🛍️', Recharge: '📱', Entertainment: '🎬', Others: '💡',
-};
-
-/* ── SVG Donut Chart ── */
-const DonutChart = ({ segments, size = 180, thickness = 28 }) => {
-  const R = (size - thickness) / 2;
-  const cx = size / 2;
-  const cy = size / 2;
-  const circumference = 2 * Math.PI * R;
-
-  let cumulative = 0;
-  const total = segments.reduce((s, seg) => s + seg.value, 0);
-
-  if (total === 0) return null;
-
-  return (
-    <svg width={size} height={size} style={{ overflow: 'visible' }}>
-      {/* Background ring */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={R}
-        fill="none"
-        stroke="var(--border-base)"
-        strokeWidth={thickness}
-      />
-
-      {segments.map((seg, i) => {
-        const pct = seg.value / total;
-        const dash = circumference * pct;
-        const gap = circumference * (1 - pct);
-        const offset = circumference * (1 - cumulative);
-        cumulative += pct;
-
-        return (
-          <circle
-            key={i}
-            cx={cx}
-            cy={cy}
-            r={R}
-            fill="none"
-            stroke={seg.color}
-            strokeWidth={thickness - 2}
-            strokeDasharray={`${dash} ${gap}`}
-            strokeDashoffset={offset}
-            strokeLinecap="butt"
-            style={{
-              transform: 'rotate(-90deg)',
-              transformOrigin: 'center',
-              transition: `stroke-dasharray 0.8s cubic-bezier(0.16,1,0.3,1) ${i * 0.08}s`,
-            }}
-          />
-        );
-      })}
-    </svg>
-  );
-};
-
-/* ── Insight Card ── */
-const InsightCard = ({ emoji, text, subtext, delay = 0 }) => (
-  <div className="insight-card" style={{ animationDelay: `${delay}s` }}>
-    <div className="insight-icon" style={{ background: 'var(--accent-subtle)', border: '1px solid var(--border-base)' }}>
-      {emoji}
-    </div>
-    <div>
-      <p style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.45, margin: 0 }}>
-        {text}
-      </p>
-      {subtext && (
-        <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{subtext}</p>
-      )}
-    </div>
-  </div>
-);
-
-/* ── Category Bar Row ── */
-const CategoryBar = ({ name, amount, percentage, color, emoji, rank }) => (
-  <div style={{ marginBottom: 14 }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: '0.875rem' }}>{emoji}</span>
-        <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{name}</span>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{
-          fontSize: '0.6875rem', fontWeight: 700, color,
-          background: `${color}18`, border: `1px solid ${color}35`,
-          padding: '1px 7px', borderRadius: 20
-        }}>
-          {percentage}%
-        </span>
-        <span style={{
-          fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)',
-          fontFamily: 'var(--font-mono)', minWidth: 75, textAlign: 'right', letterSpacing: '-0.015em'
-        }}>
-          ₹{amount.toLocaleString('en-IN')}
-        </span>
-      </div>
-    </div>
-    <div style={{ height: 6, borderRadius: 99, background: 'var(--bg-tertiary)', overflow: 'hidden' }}>
-      <div style={{
-        height: '100%', borderRadius: 99,
-        background: color,
-        width: `${percentage}%`,
-        transition: `width 0.8s cubic-bezier(0.16,1,0.3,1) ${rank * 0.06}s`,
-      }} />
-    </div>
-  </div>
-);
-
-/* ── Budget Ring ── */
-const BudgetRing = ({ percent, budget, spent, remaining }) => {
-  const R = 44;
-  const circ = 2 * Math.PI * R;
-  const clampedPct = Math.min(percent, 100);
-  const dashArr = `${(circ * clampedPct) / 100} ${circ}`;
-  const color = clampedPct > 90 ? '#DC2626' : clampedPct > 70 ? '#D97706' : 'var(--accent)';
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-      <div style={{ position: 'relative', width: 100, height: 100, flexShrink: 0 }}>
-        <svg width="100" height="100" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r={R} fill="none" stroke="var(--border-base)" strokeWidth="10" />
-          <circle
-            cx="50" cy="50" r={R} fill="none"
-            stroke={color} strokeWidth="10"
-            strokeDasharray={dashArr}
-            strokeDashoffset={circ * 0.25}
-            strokeLinecap="round"
-            className="budget-ring-circle"
-            style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.16,1,0.3,1)' }}
-          />
-        </svg>
-        <div style={{
-          position: 'absolute', inset: 0,
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 800, color, letterSpacing: '-0.03em', lineHeight: 1 }}>
-            {clampedPct}%
-          </div>
-          <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)', fontWeight: 700, marginTop: 2 }}>USED</div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, minWidth: 140 }}>
-        {[
-          { label: 'Budget Set', value: `₹${budget.toLocaleString('en-IN')}`, color: 'var(--text-primary)' },
-          { label: 'Spent', value: `₹${spent.toLocaleString('en-IN')}`, color },
-          { label: 'Remaining', value: `₹${Math.max(remaining, 0).toLocaleString('en-IN')}`, color: remaining >= 0 ? 'var(--color-success)' : '#DC2626' },
-        ].map(({ label, value, color: c }) => (
-          <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-            <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-muted)' }}>{label}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8125rem', fontWeight: 700, color: c }}>{value}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-/* ── Main Analytics View ── */
 export const AnalyticsView = () => {
   const {
     expenses,
     todos,
     monthlyBudget,
-    monthlyExpensesTotal,
     budgetUsagePercent,
     remainingBudget,
-    completedTasksCount,
-    pendingTasksCount,
-    totalTasksCount,
     taskCompletionPercent,
-    isOverBudget,
+    profile,
   } = useApp();
 
-  const hasExpenseData = expenses.length > 0;
-  const hasAnyData = expenses.length > 0 || todos.length > 0;
+  const isDark = profile?.theme === 'dark';
+  const now = new Date();
+  const currentDay = now.getDate();
+  const currentMonthNum = now.getMonth();
+  const currentYear = now.getFullYear();
+  const daysInMonth = new Date(currentYear, currentMonthNum + 1, 0).getDate();
+  const daysRemaining = Math.max(daysInMonth - currentDay, 0);
 
-  // Category totals
-  const categoryTotals = useMemo(() =>
-    expenses.reduce((acc, e) => {
-      acc[e.category] = (acc[e.category] || 0) + e.amount;
-      return acc;
-    }, {}),
-    [expenses]
-  );
-  const sortedCats = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
-  const totalSum = sortedCats.reduce((s, [, v]) => s + v, 0);
+  const monthName = now.toLocaleDateString('en-IN', { month: 'long' });
+  const monthLabel = `1–${currentDay} ${monthName} ${currentYear}`;
+  const monthPrefix = `${currentYear}-${String(currentMonthNum + 1).padStart(2, '0')}`;
 
-  // Average daily expense
-  const todayStr = new Date().toISOString().split('T')[0];
-  const monthStr = todayStr.substring(0, 7);
-  const dayOfMonth = new Date().getDate();
-  const avgDaily = dayOfMonth > 0 ? Math.round(monthlyExpensesTotal / dayOfMonth) : 0;
-  const todaySpend = expenses.filter((e) => e.date === todayStr).reduce((s, e) => s + e.amount, 0);
+  // Month transactions
+  const monthExpenses = useMemo(() => {
+    return expenses.filter(e => e.date && e.date.startsWith(monthPrefix));
+  }, [expenses, monthPrefix]);
 
-  // Savings estimate
-  const savings = monthlyBudget > 0 ? Math.max(monthlyBudget - monthlyExpensesTotal, 0) : 0;
+  const monthTotal = useMemo(() => {
+    return monthExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  }, [monthExpenses]);
 
-  // Weekly spending
-  const weeklyData = useMemo(() => {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const str = d.toISOString().split('T')[0];
-      const amt = expenses.filter((e) => e.date === str).reduce((s, e) => s + e.amount, 0);
-      const lbl = d.toLocaleDateString('en-IN', { weekday: 'short' }).slice(0, 3);
-      days.push({ label: lbl, amount: amt, isToday: str === todayStr });
-    }
-    return days;
-  }, [expenses, todayStr]);
+  const dailyAvg = currentDay > 0 ? Math.round(monthTotal / currentDay) : 0;
 
-  const weeklyMax = Math.max(...weeklyData.map((d) => d.amount), 1);
+  // Daily bars data
+  const { dailyBars, maxDayVal, highestDay } = useMemo(() => {
+    let max = 0;
+    let highest = { day: 1, amount: 0 };
+    const bars = Array.from({ length: currentDay }, (_, i) => {
+      const dayNum = i + 1;
+      const dateKey = `${monthPrefix}-${String(dayNum).padStart(2, '0')}`;
+      const amount = expenses
+        .filter(e => e.date === dateKey)
+        .reduce((s, e) => s + Number(e.amount || 0), 0);
 
-  // Donut segments
-  const donutSegments = sortedCats.slice(0, 6).map(([cat, amount]) => ({
-    name: cat,
-    value: amount,
-    color: CAT_COLORS[cat] || 'var(--text-muted)',
-  }));
+      if (amount > max) max = amount;
+      if (amount > highest.amount) highest = { day: dayNum, amount };
 
-  // Auto-generated insights
-  const insights = useMemo(() => {
-    const list = [];
+      return { day: dayNum, amount, isToday: dayNum === currentDay };
+    });
 
-    if (sortedCats.length > 0) {
-      const [topCat, topAmt] = sortedCats[0];
-      const pct = totalSum > 0 ? Math.round((topAmt / totalSum) * 100) : 0;
-      list.push({
-        emoji: CAT_EMOJIS[topCat] || '📊',
-        text: `You spent ${pct}% of your total on ${topCat}.`,
-        subtext: `₹${topAmt.toLocaleString('en-IN')} out of ₹${totalSum.toLocaleString('en-IN')} total`,
-      });
-    }
+    return {
+      dailyBars: bars,
+      maxDayVal: Math.max(max, 400),
+      highestDay: highest,
+    };
+  }, [expenses, currentDay, monthPrefix]);
 
-    if (monthlyBudget > 0) {
-      if (!isOverBudget) {
-        list.push({
-          emoji: '✅',
-          text: 'You are within your monthly budget.',
-          subtext: `₹${remainingBudget.toLocaleString('en-IN')} remaining (${100 - budgetUsagePercent}% left)`,
-        });
-      } else {
-        list.push({
-          emoji: '⚠️',
-          text: 'You have exceeded your monthly budget!',
-          subtext: `Over by ₹${(monthlyExpensesTotal - monthlyBudget).toLocaleString('en-IN')}`,
-        });
-      }
-    }
+  // Zero-spending days
+  const zeroSpendDays = useMemo(() => {
+    return dailyBars.filter(d => d.amount === 0).map(d => d.day);
+  }, [dailyBars]);
 
-    if (avgDaily > 0) {
-      list.push({
-        emoji: '📅',
-        text: `Your average daily spend this month is ₹${avgDaily.toLocaleString('en-IN')}.`,
-        subtext: `Computed from ${dayOfMonth} days in ${new Date().toLocaleString('en-IN', { month: 'long' })}`,
-      });
-    }
+  // Tasks counts
+  const totalTasks = todos.length;
+  const doneTasks = todos.filter(t => t.completed).length;
 
-    if (todaySpend > 0) {
-      list.push({
-        emoji: todaySpend > avgDaily * 1.5 ? '🔥' : '💰',
-        text: todaySpend > avgDaily * 1.5
-          ? `Today's spending (₹${todaySpend.toLocaleString('en-IN')}) is above your average.`
-          : `You've spent ₹${todaySpend.toLocaleString('en-IN')} today.`,
-        subtext: `Your current average is ₹${avgDaily.toLocaleString('en-IN')}/day`,
-      });
-    }
+  // Category breakdown (sorted)
+  const categoryRanking = useMemo(() => {
+    const map = {};
+    monthExpenses.forEach(exp => {
+      const cat = exp.category || 'Others';
+      map[cat] = (map[cat] || 0) + Number(exp.amount || 0);
+    });
 
-    if (taskCompletionPercent >= 80 && totalTasksCount > 0) {
-      list.push({
-        emoji: '🏆',
-        text: `Excellent! You have completed ${taskCompletionPercent}% of your tasks.`,
-        subtext: `${completedTasksCount} done, ${pendingTasksCount} remaining`,
-      });
-    } else if (totalTasksCount > 0) {
-      list.push({
-        emoji: '📝',
-        text: `You have ${pendingTasksCount} pending task${pendingTasksCount !== 1 ? 's' : ''}.`,
-        subtext: `Completion rate is currently at ${taskCompletionPercent}%`,
-      });
-    }
+    return Object.entries(map)
+      .map(([name, amount]) => ({
+        name,
+        amount,
+        pct: monthTotal > 0 ? Math.round((amount / monthTotal) * 100) : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+  }, [monthExpenses, monthTotal]);
 
-    if (savings > 0) {
-      list.push({
-        emoji: '🐖',
-        text: `You could save ₹${savings.toLocaleString('en-IN')} this month.`,
-        subtext: 'Keep it up by maintaining your daily discipline!',
-      });
-    }
+  const topCategory = categoryRanking[0];
 
-    return list.slice(0, 5);
-  }, [
-    sortedCats, totalSum, monthlyBudget, isOverBudget, remainingBudget,
-    budgetUsagePercent, avgDaily, dayOfMonth, todaySpend,
-    taskCompletionPercent, totalTasksCount, completedTasksCount,
-    pendingTasksCount, savings, monthlyExpensesTotal,
-  ]);
-
-  const highTasks = todos.filter((t) => t.priority === 'High').length;
-  const mediumTasks = todos.filter((t) => t.priority === 'Medium').length;
-  const lowTasks = todos.filter((t) => t.priority === 'Low').length;
+  // Projected end of month spending
+  const projectedTotal = dailyAvg * daysInMonth;
+  const projectedDifference = monthlyBudget > 0 ? monthlyBudget - projectedTotal : 0;
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* ── Page Header ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{
+            fontSize: '22px',
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            color: 'var(--text)',
+            lineHeight: 1.25,
+          }}>
+            Analytics
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
+            {monthLabel}
+          </p>
+        </div>
 
-      {/* Page Header */}
-      <div>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
-          Analytics &amp; Insights
-        </h1>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-          Computed live from your local spending and task history.
-        </p>
+        {/* Month Selector dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <select
+            className="form-input"
+            defaultValue={monthName}
+            style={{ height: 34, padding: '0 10px', fontSize: '13px', width: 'auto', cursor: 'pointer' }}
+          >
+            <option value={monthName}>{monthName} {currentYear}</option>
+          </select>
+        </div>
       </div>
 
-      {!hasAnyData ? (
-        <EmptyState
-          icon={BarChart3}
-          title="No data to visualize yet"
-          description="Add some expenses or tasks — your analytics and charts will appear automatically."
-        />
-      ) : (
-        <>
-          {/* ── Metric Cards ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
-            {[
-              {
-                label: 'Monthly Expense',
-                value: `₹${monthlyExpensesTotal.toLocaleString('en-IN')}`,
-                sub: `${expenses.filter((e) => e.date?.startsWith(monthStr)).length} records`,
-                icon: TrendingUp,
-                isMono: true,
-              },
-              {
-                label: 'Avg Daily Spend',
-                value: `₹${avgDaily.toLocaleString('en-IN')}`,
-                sub: `Over ${dayOfMonth} days`,
-                icon: CalendarDays,
-                isMono: true,
-              },
-              {
-                label: 'Top Category',
-                value: sortedCats[0]?.[0] || '—',
-                sub: sortedCats[0] ? `${Math.round((sortedCats[0][1] / totalSum) * 100)}% of total` : 'No data',
-                icon: Flame,
-                isMono: false,
-              },
-              {
-                label: 'Budget Left',
-                value: monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')}` : 'Not set',
-                sub: monthlyBudget > 0 ? `${100 - budgetUsagePercent}% remaining` : 'Set in settings',
-                icon: Wallet,
-                isMono: true,
-              },
-              {
-                label: 'Savings Est.',
-                value: monthlyBudget > 0 ? `₹${savings.toLocaleString('en-IN')}` : '—',
-                sub: monthlyBudget > 0 ? 'vs monthly budget' : 'Set a budget first',
-                icon: PiggyBank,
-                isMono: true,
-              },
-              {
-                label: 'Task Progress',
-                value: `${taskCompletionPercent}%`,
-                sub: `${completedTasksCount} done / ${pendingTasksCount} left`,
-                icon: CheckSquare,
-                isMono: true,
-              },
-            ].map(({ label, value, sub, icon: Icon, isMono }) => (
-              <div key={label} className="card" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    {label}
-                  </span>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 'var(--radius-sm)',
-                    background: 'var(--accent-subtle)', color: 'var(--accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Icon size={14} />
-                  </div>
-                </div>
-                <div style={{
-                  fontFamily: isMono ? 'var(--font-mono)' : 'var(--font-heading)',
-                  fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)',
-                  letterSpacing: '-0.02em', lineHeight: 1.1,
-                }}>
-                  {value}
-                </div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                  {sub}
-                </div>
-              </div>
-            ))}
+      {/* ── Summary Strip (4 cells) ── */}
+      <div className="summary-strip">
+        {/* Cell 1: Total spent */}
+        <div className="summary-cell">
+          <div className="summary-label">Total spent</div>
+          <div className="summary-number">
+            ₹{monthTotal.toLocaleString('en-IN')}
           </div>
+          <div className="summary-hint">
+            {monthExpenses.length} transactions
+          </div>
+        </div>
 
-          {/* ── Charts Grid ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+        {/* Cell 2: Daily average */}
+        <div className="summary-cell">
+          <div className="summary-label">Daily average</div>
+          <div className="summary-number">
+            ₹{dailyAvg.toLocaleString('en-IN')}
+          </div>
+          <div className="summary-hint">
+            {highestDay.amount > 0 ? `Highest day: ₹${highestDay.amount} on ${highestDay.day} ${now.toLocaleDateString('en-IN', { month: 'short' })}` : 'No expenses yet'}
+          </div>
+        </div>
 
-            {/* Donut Chart — Category Distribution */}
-            {hasExpenseData && (
-              <div className="card" style={{ padding: '18px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 'var(--radius-md)',
-                    background: 'var(--accent-subtle)', color: 'var(--accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <BarChart3 size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Category Distribution</div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Share of spending by category</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <DonutChart segments={donutSegments} size={150} thickness={22} />
-                  {/* Legend */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 120 }}>
-                    {donutSegments.map((seg) => (
-                      <div key={seg.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: 2, background: seg.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {CAT_EMOJIS[seg.name]} {seg.name}
-                        </span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', fontWeight: 700, color: seg.color, flexShrink: 0 }}>
-                          {totalSum > 0 ? Math.round((seg.value / totalSum) * 100) : 0}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+        {/* Cell 3: Budget used */}
+        <div className="summary-cell">
+          <div className="summary-label">Budget used</div>
+          <div className="summary-number">
+            {monthlyBudget > 0 ? `${budgetUsagePercent}%` : '—'}
+          </div>
+          {monthlyBudget > 0 && (
+            <div style={{
+              width: '100%',
+              height: 4,
+              borderRadius: 2,
+              background: 'var(--surface-2)',
+              margin: '6px 0 2px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                borderRadius: 2,
+                width: `${Math.min(budgetUsagePercent, 100)}%`,
+                background: 'var(--accent-solid)',
+              }} />
+            </div>
+          )}
+          <div className="summary-hint">
+            {monthlyBudget > 0 ? `₹${remainingBudget.toLocaleString('en-IN')} remaining` : 'Set in Settings'}
+          </div>
+        </div>
+
+        {/* Cell 4: Tasks completed */}
+        <div className="summary-cell">
+          <div className="summary-label">Tasks completed</div>
+          <div className="summary-number">
+            {doneTasks} of {totalTasks}
+          </div>
+          {totalTasks > 0 && (
+            <div style={{
+              width: '100%',
+              height: 4,
+              borderRadius: 2,
+              background: 'var(--surface-2)',
+              margin: '6px 0 2px',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                borderRadius: 2,
+                width: `${taskCompletionPercent}%`,
+                background: 'var(--accent-solid)',
+              }} />
+            </div>
+          )}
+          <div className="summary-hint">
+            {taskCompletionPercent}% completion rate
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main 2-Column Layout ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: 20,
+        alignItems: 'flex-start',
+      }}>
+        {/* ── LEFT COLUMN ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Card: Daily spending */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Daily spending</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Dashed line is the ₹{dailyAvg} average
+              </span>
+            </div>
+
+            {/* Daily Bars with Y-Axis & Dashed Line */}
+            <div style={{ position: 'relative', height: 160, display: 'flex', gap: 10, paddingTop: 10 }}>
+              {/* Y-axis markers */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                fontSize: '11px',
+                color: 'var(--text-muted)',
+                width: 34,
+                textAlign: 'right',
+                paddingBottom: 20,
+              }}>
+                <span>₹{maxDayVal}</span>
+                <span>₹{Math.round(maxDayVal / 2)}</span>
+                <span>0</span>
               </div>
-            )}
 
-            {/* Weekly Spending Bar Chart */}
-            {hasExpenseData && (
-              <div className="card" style={{ padding: '18px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              {/* Chart canvas */}
+              <div style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+                {/* Horizontal dashed average line */}
+                {dailyAvg > 0 && maxDayVal > 0 && (
                   <div style={{
-                    width: 32, height: 32, borderRadius: 'var(--radius-md)',
-                    background: 'var(--accent-subtle)', color: 'var(--accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <TrendingUp size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Weekly Spending</div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Daily spending over the last 7 days</div>
-                  </div>
-                </div>
-                <div style={{ height: 110, display: 'flex', alignItems: 'flex-end', gap: 8, paddingTop: 10 }}>
-                  {weeklyData.map(({ label, amount, isToday }, i) => {
-                    const pct = weeklyMax > 0 ? (amount / weeklyMax) * 100 : 0;
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: `${Math.min((dailyAvg / maxDayVal) * 100, 95)}%`,
+                    borderTop: '1px dashed var(--text-muted)',
+                    zIndex: 2,
+                    pointerEvents: 'none',
+                  }} />
+                )}
+
+                {/* Bars */}
+                <div style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  gap: 4,
+                  borderBottom: '1px solid var(--border)',
+                  paddingBottom: 2,
+                }}>
+                  {dailyBars.map(({ day, amount, isToday }) => {
+                    const heightPct = maxDayVal > 0 ? (amount / maxDayVal) * 100 : 0;
                     return (
-                      <div key={label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, height: '100%', justifyContent: 'flex-end' }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                          {amount > 0 ? `₹${amount >= 1000 ? `${(amount / 1000).toFixed(1)}k` : amount}` : ''}
-                        </div>
+                      <div
+                        key={day}
+                        style={{
+                          flex: 1,
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'flex-end',
+                          justifyContent: 'center',
+                        }}
+                        title={`Day ${day}: ₹${amount}`}
+                      >
                         <div style={{
-                          width: '100%', minHeight: 4,
-                          height: `${Math.max(pct, 6)}%`,
-                          background: isToday ? 'var(--accent)' : 'var(--border-base)',
-                          borderRadius: '4px 4px 0 0',
-                          transition: `height 0.7s cubic-bezier(0.16,1,0.3,1) ${i * 0.05}s`,
+                          width: '100%',
+                          height: `${Math.max(heightPct, 3)}%`,
+                          background: isToday ? 'var(--accent-solid)' : 'var(--chart-bar-muted)',
+                          borderRadius: '2px 2px 0 0',
+                          transition: 'height 0.3s ease',
                         }} />
-                        <div style={{
-                          fontSize: '0.625rem', fontWeight: isToday ? 700 : 500,
-                          color: isToday ? 'var(--accent)' : 'var(--text-muted)',
-                        }}>
-                          {label}
-                        </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            )}
 
-            {/* Budget Usage Ring */}
-            {monthlyBudget > 0 && (
-              <div className="card" style={{ padding: '18px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 'var(--radius-md)',
-                    background: 'var(--accent-subtle)', color: 'var(--accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Wallet size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Monthly Budget</div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Tracking limits and consumption</div>
-                  </div>
-                </div>
-                <div>
-                  <BudgetRing
-                    percent={budgetUsagePercent}
-                    budget={monthlyBudget}
-                    spent={monthlyExpensesTotal}
-                    remaining={remainingBudget}
-                  />
-                  {/* Progress bar under ring */}
-                  <div style={{ marginTop: 18 }}>
-                    <div style={{ height: 6, borderRadius: 99, background: 'var(--bg-tertiary)', overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', borderRadius: 99,
-                        width: `${Math.min(budgetUsagePercent, 100)}%`,
-                        background: budgetUsagePercent > 90
-                          ? '#DC2626'
-                          : budgetUsagePercent > 70
-                          ? '#D97706'
-                          : 'var(--accent)',
-                        transition: 'width 1s cubic-bezier(0.16,1,0.3,1)',
-                      }} />
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: '0.6875rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                      <span>₹0</span>
-                      <span>₹{monthlyBudget.toLocaleString('en-IN')}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Spending by Category (horizontal bars) */}
-            {hasExpenseData && (
-              <div className="card" style={{ padding: '18px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 'var(--radius-md)',
-                    background: 'var(--accent-subtle)', color: 'var(--accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Flame size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Top Expense Categories</div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Ranked by total spending</div>
-                  </div>
-                </div>
-                <div style={{ paddingBottom: 4 }}>
-                  {sortedCats.map(([cat, amount], i) => (
-                    <CategoryBar
-                      key={cat}
-                      name={cat}
-                      amount={amount}
-                      percentage={totalSum > 0 ? Math.round((amount / totalSum) * 100) : 0}
-                      color={CAT_COLORS[cat] || 'var(--text-muted)'}
-                      emoji={CAT_EMOJIS[cat] || '💡'}
-                      rank={i}
-                    />
+                {/* X-axis labels */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '11px',
+                  color: 'var(--text-muted)',
+                  paddingTop: 4,
+                }}>
+                  <span>1</span>
+                  {dailyBars.filter((_, i) => (i + 1) % 4 === 0 && (i + 1) < currentDay).map(d => (
+                    <span key={d.day}>{d.day}</span>
                   ))}
+                  <span>{currentDay}</span>
                 </div>
               </div>
-            )}
+            </div>
+          </div>
 
-            {/* Task Performance */}
-            {todos.length > 0 && (
-              <div className="card" style={{ padding: '18px 20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 'var(--radius-md)',
-                    background: 'var(--accent-subtle)', color: 'var(--accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Award size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Task Performance</div>
-                    <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Completion and priority distribution</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {/* Completion bar */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
-                      <span>Completion Rate</span>
-                      <span style={{ color: taskCompletionPercent >= 80 ? 'var(--color-success)' : 'var(--text-primary)' }}>
-                        {completedTasksCount}/{totalTasksCount} done ({taskCompletionPercent}%)
+          {/* Card: By category (monochrome bars, ranked) */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">By category</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Share of ₹{monthTotal.toLocaleString('en-IN')}
+              </span>
+            </div>
+
+            {categoryRanking.length === 0 ? (
+              <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                No category data for this month.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {categoryRanking.map(item => (
+                  <div key={item.name}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      marginBottom: 6,
+                    }}>
+                      <span style={{ fontWeight: 500, color: 'var(--text)' }}>
+                        {item.name}
+                      </span>
+                      <span style={{
+                        color: 'var(--text)',
+                        fontWeight: 500,
+                        fontFeatureSettings: '"tnum" 1',
+                      }}>
+                        ₹{item.amount.toLocaleString('en-IN')} <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>{item.pct}%</span>
                       </span>
                     </div>
-                    <div style={{ display: 'flex', height: 8, borderRadius: 99, overflow: 'hidden', gap: 2 }}>
-                      <div style={{
-                        flex: completedTasksCount, background: 'var(--accent)',
-                        transition: 'flex 1s cubic-bezier(0.16,1,0.3,1)',
-                        minWidth: completedTasksCount > 0 ? 4 : 0,
-                      }} />
-                      <div style={{
-                        flex: pendingTasksCount, background: 'var(--border-base)',
-                        transition: 'flex 1s cubic-bezier(0.16,1,0.3,1)',
-                        minWidth: pendingTasksCount > 0 ? 4 : 0,
-                      }} />
-                    </div>
-                  </div>
 
-                  {/* Priority breakdown */}
-                  <div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 10 }}>Priority Distribution</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                      {[
-                        { label: 'High', count: highTasks, color: '#DC2626' },
-                        { label: 'Medium', count: mediumTasks, color: '#D97706' },
-                        { label: 'Low', count: lowTasks, color: 'var(--accent)' },
-                      ].map(({ label, count, color }) => (
-                        <div
-                          key={label}
-                          style={{
-                            padding: '10px 8px', borderRadius: 'var(--radius-md)',
-                            background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)',
-                            textAlign: 'center',
-                          }}
-                        >
-                          <div style={{ fontSize: '0.6875rem', fontWeight: 700, color, marginBottom: 2 }}>{label}</div>
-                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{count}</div>
-                          <div style={{ fontSize: '0.5625rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                            {totalTasksCount > 0 ? `${Math.round((count / totalTasksCount) * 100)}%` : '0%'}
-                          </div>
-                        </div>
-                      ))}
+                    {/* Progress bar */}
+                    <div style={{
+                      width: '100%',
+                      height: 6,
+                      borderRadius: 3,
+                      background: 'var(--surface-2)',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        borderRadius: 3,
+                        width: `${item.pct}%`,
+                        background: 'var(--accent-solid)',
+                        transition: 'width 0.3s ease',
+                      }} />
                     </div>
                   </div>
-                </div>
+                ))}
               </div>
             )}
           </div>
+        </div>
 
-          {/* ── Smart Insights Panel ── */}
-          {insights.length > 0 && (
-            <div className="card" style={{ padding: '18px 20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                <div style={{
-                  width: 32, height: 32, borderRadius: 'var(--radius-md)',
-                  background: 'var(--accent-subtle)', color: 'var(--accent)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Lightbulb size={16} />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Smart Insights</div>
-                  <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Generated from your activity patterns</div>
+        {/* ── RIGHT COLUMN ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Card: Budget */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Budget</span>
+              {monthlyBudget > 0 && (
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  ₹{monthlyBudget.toLocaleString('en-IN')} a month
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{
+                fontSize: '24px',
+                fontWeight: 600,
+                color: 'var(--text)',
+                fontFeatureSettings: '"tnum" 1',
+              }}>
+                ₹{remainingBudget > 0 ? remainingBudget.toLocaleString('en-IN') : 0}
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                left · {daysRemaining} days to go
+              </span>
+            </div>
+
+            {/* 8px progress bar */}
+            <div style={{
+              width: '100%',
+              height: 8,
+              borderRadius: 4,
+              background: 'var(--surface-2)',
+              marginTop: 14,
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                borderRadius: 4,
+                width: `${Math.min(budgetUsagePercent, 100)}%`,
+                background: budgetUsagePercent > 90 ? 'var(--danger)' : 'var(--accent-solid)',
+                transition: 'width 0.4s ease',
+              }} />
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: '12px',
+              color: 'var(--text-muted)',
+              marginTop: 8,
+            }}>
+              <span>₹{monthSpent.toLocaleString('en-IN')} spent</span>
+              <span>₹{monthlyBudget > 0 ? monthlyBudget.toLocaleString('en-IN') : '—'}</span>
+            </div>
+          </div>
+
+          {/* Card: Savings insights (Page 5 in PDF) */}
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Savings insights</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Insight 1: Run rate */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <TrendingUp size={16} strokeWidth={1.75} style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: 2 }} />
+                <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.45 }}>
+                  {monthlyBudget > 0 ? (
+                    projectedDifference >= 0 ? (
+                      <>At ₹{dailyAvg} a day you are on track to finish {monthName} around ₹{projectedTotal.toLocaleString('en-IN')}, roughly <strong style={{ fontWeight: 600 }}>₹{projectedDifference.toLocaleString('en-IN')} under budget</strong>.</>
+                    ) : (
+                      <>At current spending of ₹{dailyAvg}/day, you may exceed your budget by ₹{Math.abs(projectedDifference).toLocaleString('en-IN')}.</>
+                    )
+                  ) : (
+                    <>You spend an average of ₹{dailyAvg} each day this month.</>
+                  )}
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {insights.map((insight, i) => (
-                  <InsightCard key={i} {...insight} delay={i * 0.05} />
-                ))}
+
+              {/* Insight 2: Category distribution */}
+              {topCategory && (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <AlertCircle size={16} strokeWidth={1.75} style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: 2 }} />
+                  <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.45 }}>
+                    {topCategory.name} is {topCategory.pct}% of your spending. Cutting it by a quarter would save about <strong style={{ fontWeight: 600 }}>₹{Math.round(topCategory.amount * 0.25).toLocaleString('en-IN')}</strong> so far this month.
+                  </div>
+                </div>
+              )}
+
+              {/* Insight 3: Zero-spending days */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <Check size={16} strokeWidth={1.75} style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: 2 }} />
+                <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.45 }}>
+                  {zeroSpendDays.length > 0 ? (
+                    <>You have had {zeroSpendDays.length} day{zeroSpendDays.length > 1 ? 's' : ''} with no spending ({zeroSpendDays.slice(0, 3).join(', ')} {now.toLocaleDateString('en-IN', { month: 'short' })}).</>
+                  ) : (
+                    <>You have recorded expenses on every active day so far this month.</>
+                  )}
+                </div>
               </div>
             </div>
-          )}
-        </>
-      )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

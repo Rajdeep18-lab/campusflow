@@ -2,11 +2,9 @@ import React from 'react';
 import { Search, Sun, Moon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { UserAvatar } from './UserAvatar';
 
 export const Navbar = () => {
   const {
-    activePage,
     profile,
     toggleTheme,
     setIsGlobalSearchOpen,
@@ -14,158 +12,73 @@ export const Navbar = () => {
   } = useApp();
 
   const { currentUser } = useAuth();
-
-  const pageTitles = {
-    dashboard: 'Overview',
-    expenses: 'Expense Manager',
-    todos: 'Task Manager',
-    analytics: 'Analytics & Insights',
-    calendar: 'Calendar View',
-    settings: 'Settings',
-  };
+  const isDark = profile?.theme === 'dark';
+  const displayName = profile?.name || currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'Rajdeep');
+  const initial = (displayName.charAt(0) || 'R').toUpperCase();
 
   return (
     <header className="app-navbar">
-      {/* Left: Mobile brand | Desktop active page breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-        {/* Mobile logo */}
-        <div
-          className="md:hidden"
-          style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-          onClick={() => setActivePage('dashboard')}
-        >
-          <div style={{
-            width: 32, height: 32,
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-            boxShadow: '0 2px 8px var(--accent-glow)',
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 6h10a6 6 0 0 1 0 12H4" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M4 12h7" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <span style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '0.9375rem',
-            fontWeight: 800,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em',
-          }}>
-            CampusFlow
-          </span>
+      {/* Mobile brand (<= 768px) */}
+      <div
+        className="flex items-center gap-2 md:hidden cursor-pointer"
+        onClick={() => setActivePage('dashboard')}
+      >
+        <div className="sidebar-logo-icon" style={{ width: 26, height: 26, fontSize: 13 }}>
+          C
         </div>
-
-        {/* Desktop breadcrumb */}
-        <div className="hidden md:flex" style={{ alignItems: 'center', gap: 8, minWidth: 0 }}>
-          <span style={{
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            color: 'var(--text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-          }}>
-            CampusFlow
-          </span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>/</span>
-          <h1 style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: '0.9375rem',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.2,
-            whiteSpace: 'nowrap',
-          }}>
-            {pageTitles[activePage] || 'Overview'}
-          </h1>
-        </div>
+        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
+          CampusFlow
+        </span>
       </div>
 
+      {/* Desktop Search Button (>= 768px) */}
+      <button
+        onClick={() => setIsGlobalSearchOpen(true)}
+        className="nav-search-btn hidden md:flex"
+        title="Search expenses, tasks (Ctrl+K)"
+      >
+        <Search size={14} color="var(--text-muted)" strokeWidth={1.75} />
+        <span>Search</span>
+        <span className="kbd-badge">Ctrl K</span>
+      </button>
+
       {/* Right controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-        {/* Search trigger */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Mobile Search Icon */}
         <button
           onClick={() => setIsGlobalSearchOpen(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            height: 36,
-            padding: '0 12px',
-            borderRadius: 'var(--radius-md)',
-            background: 'var(--bg-tertiary)',
-            border: '1px solid var(--border-base)',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            fontSize: '0.8125rem',
-            fontWeight: 500,
-            transition: 'all 0.15s',
-            whiteSpace: 'nowrap',
-            maxWidth: 240,
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'var(--border-accent)';
-            e.currentTarget.style.color = 'var(--text-primary)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--border-base)';
-            e.currentTarget.style.color = 'var(--text-muted)';
-          }}
-          title="Search (Ctrl+K)"
+          className="btn-icon md:hidden"
+          title="Search"
+          aria-label="Search"
         >
-          <Search size={14} strokeWidth={2} style={{ flexShrink: 0 }} />
-          <span style={{ display: 'none' }} className="sm:inline">Search...</span>
-          <kbd style={{
-            display: 'none',
-            padding: '2px 5px',
-            borderRadius: 4,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-base)',
-            fontSize: '0.625rem',
-            fontWeight: 600,
-            lineHeight: 1.4,
-            color: 'var(--text-muted)',
-            fontFamily: 'var(--font-mono)',
-          }} className="lg:inline-block">
-            ⌘K
-          </kbd>
+          <Search size={18} strokeWidth={1.75} />
         </button>
 
-        {/* Theme toggle */}
+        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="btn-icon"
-          title={`Switch to ${profile?.theme === 'dark' ? 'Light' : 'Dark'} mode`}
+          className="theme-toggle-btn"
+          title={isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
           aria-label="Toggle theme"
         >
-          {profile?.theme === 'dark'
-            ? <Sun size={17} color="var(--accent)" strokeWidth={2.2} />
-            : <Moon size={17} color="var(--accent)" strokeWidth={2.2} />
-          }
+          {isDark ? (
+            <Sun size={15} strokeWidth={1.75} />
+          ) : (
+            <Moon size={15} strokeWidth={1.75} />
+          )}
         </button>
 
-        {/* Avatar → Settings */}
-        <button
+        {/* Mobile Avatar (<= 768px) - Clicking navigates to Settings */}
+        <div
+          className="sidebar-avatar-circle md:hidden"
           onClick={() => setActivePage('settings')}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-            borderRadius: 'var(--radius-full)',
-            transition: 'opacity 0.15s',
-            display: 'flex',
-            alignItems: 'center',
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          title={currentUser?.email ? `Signed in as ${currentUser.email} · Settings` : 'Profile & Settings'}
+          style={{ cursor: 'pointer' }}
+          title="Settings"
+          role="button"
+          tabIndex={0}
         >
-          <UserAvatar size="sm" />
-        </button>
+          {initial}
+        </div>
       </div>
     </header>
   );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, WifiOff, Wifi } from 'lucide-react';
 
 /**
- * PWAUpdater — listens for SW update events safely (no virtual: imports).
+ * PWAUpdater — listens for SW update events safely.
  * PWAOfflineIndicator — shows a pill when the user is offline.
  */
 
@@ -13,7 +13,6 @@ export const PWAUpdater = () => {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
-    // Listen for SW update found
     const handleSWUpdate = (reg) => {
       if (reg.waiting) {
         setNeedRefresh(true);
@@ -47,31 +46,43 @@ export const PWAUpdater = () => {
 
   return (
     <div style={{
-      position: 'fixed', top: 16, left: '50%',
-      transform: 'translateX(-50%)', zIndex: 99999,
-      background: 'rgba(15,23,42,0.95)',
-      border: '1px solid rgba(5,150,105,0.4)',
-      borderRadius: 14, padding: '12px 18px',
-      display: 'flex', alignItems: 'center', gap: 12,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-      backdropFilter: 'blur(20px)',
-      animation: 'slideDownToast 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
+      position: 'fixed',
+      top: 16,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 99999,
+      background: 'var(--bg-surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-card)',
+      padding: '10px 16px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
       whiteSpace: 'nowrap',
     }}>
-      <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-        🎉 New version available!
+      <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+        A new version of CampusFlow is available
       </div>
       <button
         onClick={handleUpdate}
+        className="btn btn-primary"
         style={{
-          height: 32, padding: '0 14px', borderRadius: 8,
-          background: 'linear-gradient(135deg, #059669, #0F766E)',
-          color: '#fff', fontWeight: 700, fontSize: '0.8125rem',
-          border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: 6,
+          height: 30,
+          padding: '0 12px',
+          borderRadius: 'var(--radius-control)',
+          background: 'var(--accent)',
+          color: '#FFFFFF',
+          fontWeight: 500,
+          fontSize: '0.75rem',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
         }}
       >
-        <RefreshCw size={13} strokeWidth={2.5} /> Update
+        <RefreshCw size={12} />
+        Update
       </button>
     </div>
   );
@@ -105,23 +116,27 @@ export const PWAOfflineIndicator = () => {
 
   return (
     <div style={{
-      position: 'fixed', top: 16, left: '50%',
-      transform: 'translateX(-50%)', zIndex: 99998,
-      background: isOnline ? 'rgba(5,150,105,0.9)' : 'rgba(220,38,38,0.92)',
-      borderRadius: 24, padding: '8px 16px',
-      display: 'flex', alignItems: 'center', gap: 8,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-      backdropFilter: 'blur(10px)',
-      animation: 'slideDownToast 0.3s cubic-bezier(0.16,1,0.3,1) forwards',
+      position: 'fixed',
+      top: 16,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 99998,
+      background: isOnline ? 'var(--accent)' : 'var(--danger)',
+      color: '#FFFFFF',
+      borderRadius: 9999,
+      padding: '6px 14px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      fontSize: '0.75rem',
+      fontWeight: 500,
       whiteSpace: 'nowrap',
     }}>
       {isOnline
-        ? <Wifi size={14} color="#fff" strokeWidth={2.5} />
-        : <WifiOff size={14} color="#fff" strokeWidth={2.5} />
+        ? <Wifi size={13} color="#fff" />
+        : <WifiOff size={13} color="#fff" />
       }
-      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#fff' }}>
-        {isOnline ? 'Back online!' : "You're offline — app still works!"}
-      </span>
+      <span>{isOnline ? 'Back online' : 'Offline mode — local data active'}</span>
     </div>
   );
 };

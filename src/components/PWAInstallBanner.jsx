@@ -10,10 +10,8 @@ export const PWAInstallBanner = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [show, setShow] = useState(false);
   const [installing, setInstalling] = useState(false);
-  const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    // Don't show if user already dismissed
     if (localStorage.getItem('pwa-install-dismissed') === 'true') return;
 
     const handler = (e) => {
@@ -24,14 +22,12 @@ export const PWAInstallBanner = () => {
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Detect if already installed (standalone mode)
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setShow(false);
     }
 
     window.addEventListener('appinstalled', () => {
       setShow(false);
-      setInstalled(true);
     });
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -60,89 +56,82 @@ export const PWAInstallBanner = () => {
     <div
       style={{
         position: 'fixed',
-        bottom: 80, // above bottom nav
+        bottom: 74,
         left: 12,
         right: 12,
         zIndex: 9999,
-        borderRadius: 16,
-        background: 'linear-gradient(135deg, rgba(5,150,105,0.18) 0%, rgba(15,118,110,0.18) 100%)',
-        border: '1px solid rgba(5,150,105,0.4)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        padding: '14px 16px',
+        borderRadius: 'var(--radius-card)',
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        padding: '12px 14px',
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(5,150,105,0.1)',
-        animation: 'slideUpBanner 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
       }}
     >
-      {/* Icon */}
       <div style={{
-        width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-        background: 'linear-gradient(135deg, #059669, #0F766E)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 12px rgba(5,150,105,0.4)',
+        width: 36,
+        height: 36,
+        borderRadius: 'var(--radius-control)',
+        flexShrink: 0,
+        background: 'var(--accent)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#FFFFFF',
       }}>
-        <Smartphone size={22} color="#fff" strokeWidth={2} />
+        <Smartphone size={18} strokeWidth={2} />
       </div>
 
-      {/* Text */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+        <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.2 }}>
           Install CampusFlow
         </div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2, lineHeight: 1.4 }}>
-          Add to Home Screen for a faster, native-like experience
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+          Add to home screen for faster offline access
         </div>
       </div>
 
-      {/* Install button */}
       <button
         onClick={handleInstall}
         disabled={installing}
+        className="btn btn-primary"
         style={{
           flexShrink: 0,
-          height: 36,
-          padding: '0 14px',
-          borderRadius: 10,
-          background: 'linear-gradient(135deg, #059669, #0F766E)',
-          color: '#fff',
-          fontWeight: 700,
-          fontSize: '0.8125rem',
-          border: 'none',
-          cursor: 'pointer',
+          height: 32,
+          padding: '0 12px',
+          borderRadius: 'var(--radius-control)',
+          background: 'var(--accent)',
+          color: '#FFFFFF',
+          fontSize: '0.75rem',
+          fontWeight: 500,
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          boxShadow: '0 2px 8px rgba(5,150,105,0.4)',
-          opacity: installing ? 0.7 : 1,
-          transition: 'opacity 0.15s',
         }}
       >
-        <Download size={14} strokeWidth={2.5} />
-        {installing ? 'Installing…' : 'Install'}
+        <Download size={13} />
+        {installing ? 'Installing...' : 'Install'}
       </button>
 
-      {/* Dismiss */}
       <button
         onClick={handleDismiss}
+        aria-label="Dismiss"
         style={{
-          flexShrink: 0,
-          width: 28, height: 28,
-          borderRadius: 8,
-          background: 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          width: 24,
+          height: 24,
+          border: 'none',
+          background: 'transparent',
           color: 'var(--text-muted)',
           cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
         }}
-        aria-label="Dismiss install prompt"
       >
-        <X size={14} />
+        <X size={15} />
       </button>
     </div>
   );
 };
-
-export default PWAInstallBanner;

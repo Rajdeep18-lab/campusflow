@@ -1,52 +1,21 @@
 import React, { useState } from 'react';
 import {
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Receipt,
-  CheckSquare,
   Plus,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
+const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
-const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-const CATEGORY_EMOJIS = {
-  Food: '🍲', Travel: '🚌', Books: '📚', Hostel: '🏠',
-  Mess: '🍱', Shopping: '🛍️', Recharge: '📱', Entertainment: '🎬', Others: '💡',
-};
-
-const CATEGORY_COLORS = {
-  Food: '#C77726',
-  Travel: '#4A7C59',
-  Books: '#685B88',
-  Hostel: '#B25D42',
-  Mess: '#2F6B4F',
-  Shopping: '#A85A75',
-  Recharge: '#3C6E71',
-  Entertainment: '#7D688D',
-  Others: '#7A7568',
-};
-
-// Format date string to human-readable label
-const formatDateLabel = (dateStr) => {
-  if (!dateStr) return '';
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-};
 
 export const CalendarView = () => {
   const {
     expenses,
     todos,
-    monthlyBudget,
     setIsQuickAddExpenseOpen,
     setIsTaskModalOpen,
     toggleTodoCompleted,
@@ -61,448 +30,402 @@ export const CalendarView = () => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayStr = new Date().toISOString().split('T')[0];
 
+  const pad = (n) => String(n).padStart(2, '0');
+
+  // Month grid cells
   const calendarCells = [
     ...Array(firstDayOfMonth).fill(null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  const pad = (n) => String(n).padStart(2, '0');
-
   // Per-day computed data
   const getDayData = (dateStr) => {
-    const dayExp = expenses.filter((e) => e.date === dateStr);
-    const dayTodos = todos.filter((t) => t.dueDate === dateStr);
-    const total = dayExp.reduce((s, e) => s + e.amount, 0);
+    const dayExp = expenses.filter(e => e.date === dateStr);
+    const dayTodos = todos.filter(t => t.dueDate === dateStr);
+    const totalSpent = dayExp.reduce((s, e) => s + Number(e.amount || 0), 0);
     return {
       expenses: dayExp,
       todos: dayTodos,
-      total,
-      completedTodos: dayTodos.filter((t) => t.completed).length,
-      pendingTodos: dayTodos.filter((t) => !t.completed).length,
+      totalSpent,
     };
   };
 
-  // Warning threshold: daily spending > 10% of monthly budget (or ₹500 default)
-  const dailyWarningThreshold = monthlyBudget > 0 ? monthlyBudget * 0.10 : 500;
+  const selectedData = getDayData(selectedDateStr);
 
-  // Selected day data
-  const selected = getDayData(selectedDateStr);
-
-  // Month stats
-  const monthStr = `${year}-${pad(month + 1)}`;
-  const monthlyTotal = expenses
-    .filter((e) => e.date && e.date.startsWith(monthStr))
-    .reduce((s, e) => s + e.amount, 0);
-  const monthlyTasksDue = todos.filter((t) => t.dueDate && t.dueDate.startsWith(monthStr)).length;
+  const formatSelectedDateTitle = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  };
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-
       {/* ── Page Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+          <h1 style={{
+            fontSize: '22px',
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            color: 'var(--text)',
+            lineHeight: 1.25,
+          }}>
             Calendar
           </h1>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-            Visual overview of your daily expenses and schedule deadlines.
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
+            Deadlines and spending, day by day
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+
+        {/* Header Right: Legend + Month Nav + Today */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          {/* Legend */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '12px', color: 'var(--text-muted)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{
+                fontSize: '11px',
+                padding: '1px 6px',
+                borderRadius: 4,
+                background: 'var(--accent-tint)',
+                color: 'var(--accent)',
+                fontWeight: 500,
+              }}>
+                Deadline
+              </span>
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#A06A15' }} />
+              <span>Spending</span>
+            </span>
+          </div>
+
+          {/* Month switcher */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-control)',
+            padding: '2px 6px',
+          }}>
+            <button
+              onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
+              className="btn-icon"
+              style={{ width: 26, height: 26 }}
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', minWidth: 110, textAlign: 'center' }}>
+              {MONTH_NAMES[month]} {year}
+            </span>
+            <button
+              onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
+              className="btn-icon"
+              style={{ width: 26, height: 26 }}
+              aria-label="Next month"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {/* Today button */}
           <button
             onClick={() => {
               const t = new Date();
               setCurrentDate(t);
               setSelectedDateStr(t.toISOString().split('T')[0]);
             }}
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary"
           >
-            <CalendarDays size={14} style={{ color: 'var(--accent)' }} />
             Today
           </button>
         </div>
       </div>
 
-      {/* ── Month Summary Metric Strip ── */}
+      {/* ── Main Layout: Calendar Grid (Left) + 300px Day Details (Right) ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: 12,
-      }}>
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        gridTemplateColumns: '1fr 300px',
+        gap: 20,
+        alignItems: 'flex-start',
+      }}
+      className="cal-layout-grid"
+      >
+        {/* Left Column: Calendar Grid Card */}
+        <div className="card" style={{ padding: '16px' }}>
+          {/* Weekday headers */}
           <div style={{
-            width: 40, height: 40, borderRadius: 'var(--radius-md)',
-            background: 'var(--accent-subtle)', color: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            textAlign: 'center',
+            marginBottom: 8,
           }}>
-            <Receipt size={20} />
+            {DAYS_OF_WEEK.map(d => (
+              <div key={d} style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', padding: '4px 0' }}>
+                {d}
+              </div>
+            ))}
           </div>
-          <div>
-            <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              {MONTH_NAMES[month]} Spending
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-success)', marginTop: 2 }}>
-              ₹{monthlyTotal.toLocaleString('en-IN')}
-            </div>
-          </div>
-        </div>
 
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          {/* Calendar cell matrix */}
           <div style={{
-            width: 40, height: 40, borderRadius: 'var(--radius-md)',
-            background: 'var(--accent-subtle)', color: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, 1fr)',
+            gap: 4,
           }}>
-            <CheckSquare size={20} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Tasks Due In {MONTH_NAMES[month]}
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: 2 }}>
-              {monthlyTasksDue}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Main Layout: Calendar Grid + Selected Day Pane ── */}
-      <div className="cal-layout-grid">
-        {/* ── Left Column: Calendar Grid ── */}
-        <div className="card" style={{ padding: '16px 14px' }}>
-          {/* Controls Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.0625rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {MONTH_NAMES[month]} {year}
-            </h2>
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button
-                onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-                className="btn-icon"
-                aria-label="Previous Month"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-                className="btn-icon"
-                aria-label="Next Month"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Calendar Table */}
-          <div>
-            {/* Day of week headers */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
-              {DAYS_OF_WEEK.map((d) => (
-                <div
-                  key={d}
-                  style={{
-                    textAlign: 'center',
-                    fontSize: '0.625rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.07em',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-muted)',
-                    padding: '4px 0',
-                  }}
-                >
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar cells grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-              {calendarCells.map((day, idx) => {
-                if (!day) return <div key={`empty-${idx}`} style={{ minHeight: 64 }} />;
-
-                const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
-                const dayData = getDayData(dateStr);
-                const isSelected = dateStr === selectedDateStr;
-                const isToday = dateStr === todayStr;
-                const dayOfWeek = new Date(dateStr + 'T00:00:00').getDay();
-                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                const hasWarning = dayData.total > dailyWarningThreshold && dayData.total > 0;
-
-                let cellClass = 'cal-cell';
-                if (isSelected) cellClass += ' cal-cell--selected';
-                else if (isToday) cellClass += ' cal-cell--today';
-                else if (isWeekend) cellClass += ' cal-cell--weekend';
-
+            {calendarCells.map((day, idx) => {
+              if (!day) {
                 return (
                   <div
-                    key={dateStr}
-                    className={cellClass}
-                    onClick={() => setSelectedDateStr(dateStr)}
-                    title={formatDateLabel(dateStr)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') setSelectedDateStr(dateStr);
+                    key={`empty-${idx}`}
+                    style={{
+                      minHeight: 82,
+                      border: '1px solid transparent',
                     }}
-                  >
-                    {/* Day number */}
-                    <span style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.8125rem',
-                      fontWeight: isSelected || isToday ? 700 : 500,
-                      color: isSelected
-                        ? 'var(--accent)'
-                        : isToday
-                        ? 'var(--accent)'
-                        : 'var(--text-primary)',
-                      lineHeight: 1,
-                    }}>
-                      {day}
-                    </span>
+                  />
+                );
+              }
 
-                    {/* Expense amount */}
-                    {dayData.total > 0 && (
+              const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
+              const dayData = getDayData(dateStr);
+              const isToday = dateStr === todayStr;
+              const isSelected = dateStr === selectedDateStr;
+
+              return (
+                <div
+                  key={dateStr}
+                  onClick={() => setSelectedDateStr(dateStr)}
+                  style={{
+                    minHeight: 82,
+                    padding: '6px',
+                    borderRadius: 'var(--radius-control)',
+                    border: isSelected
+                      ? '2px solid var(--accent-solid)'
+                      : '1px solid var(--border-subtle)',
+                    background: isSelected ? 'var(--surface-2)' : 'var(--surface)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    transition: 'all 0.1s ease',
+                  }}
+                >
+                  {/* Top: Day number */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    {isToday ? (
                       <span style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.5625rem',
-                        fontWeight: 700,
-                        color: hasWarning ? '#D97706' : 'var(--color-success)',
-                        letterSpacing: '-0.02em',
-                        marginTop: 3,
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        background: 'var(--accent-solid)',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 600,
                         lineHeight: 1,
                       }}>
-                        ₹{dayData.total >= 1000
-                          ? `${(dayData.total / 1000).toFixed(1)}k`
-                          : dayData.total.toLocaleString('en-IN')}
+                        {day}
+                      </span>
+                    ) : (
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: isSelected ? 600 : 500,
+                        color: 'var(--text)',
+                        paddingLeft: 2,
+                      }}>
+                        {day}
                       </span>
                     )}
 
-                    {/* Task count */}
-                    {dayData.todos.length > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2 }}>
-                        <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', color: 'var(--text-muted)', fontWeight: 700, lineHeight: 1 }}>
-                          {dayData.todos.length}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Budget warning dot */}
-                    {hasWarning && (
-                      <div style={{
-                        position: 'absolute', top: 4, right: 4,
-                        width: 5, height: 5, borderRadius: '50%',
-                        background: '#D97706',
-                      }} />
+                    {/* Spending tag */}
+                    {dayData.totalSpent > 0 && (
+                      <span style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        color: '#A06A15',
+                        fontFeatureSettings: '"tnum" 1',
+                        fontVariantNumeric: 'tabular-nums',
+                      }}>
+                        <span style={{ width: 4, height: 4, borderRadius: '50%', background: '#A06A15' }} />
+                        ₹{dayData.totalSpent >= 1000
+                          ? `${(dayData.totalSpent / 1000).toFixed(1)}k`
+                          : dayData.totalSpent}
+                      </span>
                     )}
                   </div>
-                );
-              })}
-            </div>
 
-            {/* Legend */}
-            <div style={{
-              display: 'flex', gap: 14, marginTop: 14, paddingTop: 12,
-              borderTop: '1px solid var(--border-base)',
-              fontSize: '0.625rem', color: 'var(--text-muted)', fontWeight: 600,
-              letterSpacing: '0.03em', flexWrap: 'wrap',
-            }}>
-              {[
-                { dot: 'var(--accent)', label: 'Today / Selected' },
-                { dot: 'var(--color-success)', label: 'Expenses' },
-                { dot: 'var(--accent)', label: 'Tasks Due' },
-                { dot: '#D97706', label: 'High Spending' },
-              ].map(({ dot, label }) => (
-                <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0 }} />
-                  {label}
-                </span>
-              ))}
-            </div>
+                  {/* Deadline chips */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
+                    {dayData.todos.slice(0, 2).map(t => (
+                      <div
+                        key={t.id}
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 500,
+                          padding: '2px 4px',
+                          borderRadius: 3,
+                          background: 'var(--accent-tint)',
+                          color: 'var(--accent)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {t.title}
+                      </div>
+                    ))}
+                    {dayData.todos.length > 2 && (
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', paddingLeft: 2 }}>
+                        +{dayData.todos.length - 2} more
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* ── Right Column: Selected Day Pane ── */}
-        <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-
-          {/* Date header */}
-          <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border-base)' }}>
-            <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-              {selectedDateStr === todayStr ? '📅 Today' : formatDateLabel(selectedDateStr).split(',')[0]}
+        {/* Right Column: 300px Selected Day Details (Page 4 in PDF) */}
+        <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Header */}
+          <div>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>
+              {formatSelectedDateTitle(selectedDateStr)}
             </div>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 4, lineHeight: 1.4 }}>
-              {formatDateLabel(selectedDateStr)}
-            </div>
-
-            {/* Day totals */}
-            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-              <div style={{
-                flex: 1, padding: '8px 12px', borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Spent</div>
-                <div style={{ fontSize: '0.9375rem', fontWeight: 800, color: 'var(--color-success)', letterSpacing: '-0.02em', marginTop: 2 }}>
-                  {selected.total > 0 ? `₹${selected.total.toLocaleString('en-IN')}` : '₹0'}
-                </div>
-              </div>
-              <div style={{
-                flex: 1, padding: '8px 12px', borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)',
-                textAlign: 'center',
-              }}>
-                <div style={{ fontSize: '0.5625rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tasks</div>
-                <div style={{ fontSize: '0.9375rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginTop: 2 }}>
-                  {selected.todos.length}
-                </div>
-              </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+              {selectedDateStr === todayStr ? 'Today' : selectedDateStr}
             </div>
           </div>
 
-          {/* Expenses section */}
-          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-base)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-              <Receipt size={13} color="var(--accent)" />
-              <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                Expenses ({selected.expenses.length})
-              </span>
+          {/* Section: Spending */}
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 14 }}>
+            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', marginBottom: 4 }}>
+              Spending
+            </div>
+            <div style={{
+              fontSize: '20px',
+              fontWeight: 600,
+              color: 'var(--text)',
+              fontFeatureSettings: '"tnum" 1',
+              fontVariantNumeric: 'tabular-nums',
+              marginBottom: 10,
+            }}>
+              ₹{selectedData.totalSpent.toLocaleString('en-IN')}
             </div>
 
-            {selected.expenses.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0', textAlign: 'center' }}>
-                <Receipt size={22} color="var(--text-muted)" strokeWidth={1.4} style={{ marginBottom: 6 }} />
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No expenses on this date</div>
+            {selectedData.expenses.length === 0 ? (
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                No expenses recorded for this date.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                {selected.expenses.map((exp) => {
-                  const catColor = CATEGORY_COLORS[exp.category] || 'var(--text-muted)';
-                  const catEmoji = CATEGORY_EMOJIS[exp.category] || '💡';
-                  return (
-                    <div
-                      key={exp.id}
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '8px 10px',
-                        borderRadius: 'var(--radius-md)',
-                        background: 'var(--bg-tertiary)',
-                        border: '1px solid var(--border-subtle)',
-                        gap: 8,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                        <div style={{
-                          width: 28, height: 28, borderRadius: 8,
-                          background: `${catColor}18`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: '0.875rem', flexShrink: 0,
-                        }}>
-                          {catEmoji}
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {exp.title}
-                          </div>
-                          <div style={{ fontSize: '0.625rem', color: catColor, fontWeight: 600 }}>{exp.category}</div>
-                        </div>
-                      </div>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-success)', flexShrink: 0 }}>
-                        ₹{exp.amount.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                  );
-                })}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {selectedData.expenses.map(exp => (
+                  <div
+                    key={exp.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      fontSize: '12px',
+                    }}
+                  >
+                    <span style={{ color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8 }}>
+                      {exp.title} · <span style={{ color: 'var(--text-muted)' }}>{exp.category}</span>
+                    </span>
+                    <span style={{
+                      fontWeight: 600,
+                      color: 'var(--text)',
+                      fontFeatureSettings: '"tnum" 1',
+                      flexShrink: 0,
+                    }}>
+                      ₹{Number(exp.amount || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Tasks section */}
-          <div style={{ padding: '14px 18px', flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <CheckSquare size={13} color="var(--accent)" />
-                <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                  Tasks
-                </span>
-              </div>
-              {selected.todos.length > 0 && (
-                <div style={{ display: 'flex', gap: 8 }}>
-                  {selected.completedTodos > 0 && (
-                    <span style={{ fontSize: '0.625rem', fontWeight: 600, color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <CheckCircle2 size={11} /> {selected.completedTodos} done
-                    </span>
-                  )}
-                  {selected.pendingTodos > 0 && (
-                    <span style={{ fontSize: '0.625rem', fontWeight: 600, color: '#D97706', display: 'flex', alignItems: 'center', gap: 3 }}>
-                      <Clock size={11} /> {selected.pendingTodos} pending
-                    </span>
-                  )}
-                </div>
-              )}
+          {/* Section: Due today */}
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 14 }}>
+            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-muted)', marginBottom: 8 }}>
+              Due {selectedDateStr === todayStr ? 'today' : 'on this date'}
             </div>
 
-            {selected.todos.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0', textAlign: 'center' }}>
-                <CheckSquare size={22} color="var(--text-muted)" strokeWidth={1.4} style={{ marginBottom: 6 }} />
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No tasks scheduled</div>
+            {selectedData.todos.length === 0 ? (
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                No deadlines scheduled.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
-                {selected.todos.map((todo) => {
-                  const priorityColors = { High: '#DC2626', Medium: '#D97706', Low: 'var(--accent)' };
-                  const pColor = priorityColors[todo.priority] || 'var(--text-muted)';
-                  return (
-                    <div
-                      key={todo.id}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {selectedData.todos.map(todo => (
+                  <div
+                    key={todo.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: '13px',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={todo.completed}
+                      onChange={() => toggleTodoCompleted(todo.id)}
                       style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '8px 10px',
-                        borderRadius: 'var(--radius-md)',
-                        background: 'var(--bg-tertiary)',
-                        border: '1px solid var(--border-subtle)',
-                        borderLeft: `3px solid ${pColor}`,
-                        gap: 8,
+                        width: 15,
+                        height: 15,
+                        borderRadius: 3,
+                        cursor: 'pointer',
+                        accentColor: 'var(--accent-solid)',
+                        flexShrink: 0,
                       }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                        <input
-                          type="checkbox"
-                          checked={todo.completed}
-                          onChange={() => toggleTodoCompleted(todo.id)}
-                          style={{ width: 14, height: 14, accentColor: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
-                        />
-                        <span style={{
-                          fontSize: '0.8125rem', fontWeight: 600,
-                          color: todo.completed ? 'var(--text-muted)' : 'var(--text-primary)',
-                          textDecoration: todo.completed ? 'line-through' : 'none',
-                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                        }}>
-                          {todo.title}
-                        </span>
-                      </div>
-                      <span style={{
-                        fontSize: '0.5625rem', fontWeight: 700, color: pColor,
-                        background: `${pColor}15`, border: `1px solid ${pColor}30`,
-                        padding: '2px 5px', borderRadius: 4, flexShrink: 0,
-                      }}>
-                        {todo.priority}
-                      </span>
-                    </div>
-                  );
-                })}
+                    />
+                    <span style={{
+                      color: todo.completed ? 'var(--text-muted)' : 'var(--text)',
+                      textDecoration: todo.completed ? 'line-through' : 'none',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {todo.title}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* Quick actions footer */}
-          <div style={{ padding: '14px 18px', borderTop: '1px solid var(--border-base)', display: 'flex', gap: 8 }}>
-            <button onClick={() => setIsQuickAddExpenseOpen(true)} className="btn btn-primary btn-sm" style={{ flex: 1 }}>
-              <Plus size={13} />
-              Add Expense
+          {/* Action buttons */}
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            borderTop: '1px solid var(--border-subtle)',
+            paddingTop: 14,
+            marginTop: 'auto',
+          }}>
+            <button
+              onClick={() => setIsQuickAddExpenseOpen(true)}
+              className="btn btn-secondary"
+              style={{ flex: 1, fontSize: '12px' }}
+            >
+              Add expense
             </button>
-            <button onClick={() => setIsTaskModalOpen(true)} className="btn btn-secondary btn-sm" style={{ flex: 1 }}>
-              <Plus size={13} />
-              Add Task
+            <button
+              onClick={() => setIsTaskModalOpen(true)}
+              className="btn btn-secondary"
+              style={{ flex: 1, fontSize: '12px' }}
+            >
+              Add task
             </button>
           </div>
         </div>

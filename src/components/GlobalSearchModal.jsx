@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, CreditCard, CheckSquare, ArrowRight } from 'lucide-react';
+import { Search, X, ArrowRight, CheckSquare } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { getCategoryColor } from '../utils/categoryColors';
 
 export const GlobalSearchModal = () => {
   const {
@@ -11,6 +12,7 @@ export const GlobalSearchModal = () => {
     setActivePage,
     setEditingExpense,
     toggleTodoCompleted,
+    theme,
   } = useApp();
 
   const [query, setQuery] = useState('');
@@ -58,171 +60,135 @@ export const GlobalSearchModal = () => {
   return (
     <div className="modal-overlay" onClick={handleClose}>
       <div
+        className="modal-card"
         style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-base)',
-          borderRadius: 'var(--radius-2xl)',
           width: '100%',
-          maxWidth: 560,
+          maxWidth: 540,
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-modal)',
+          padding: 0,
           overflow: 'hidden',
-          boxShadow: 'var(--shadow-xl)',
-          animation: 'modalIn var(--duration-slow) var(--ease-spring) forwards',
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Search input row */}
+        {/* Search header row */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: 12,
-          padding: '0 16px',
-          borderBottom: '1px solid var(--border-base)',
-          background: 'var(--bg-secondary)',
-          height: 56,
+          padding: '12px 16px',
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--bg-surface)',
         }}>
-          <Search size={17} color="var(--accent)" strokeWidth={2} style={{ flexShrink: 0 }} />
+          <Search size={16} color="var(--text-secondary)" style={{ flexShrink: 0 }} />
           <input
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search expenses, categories, tasks..."
+            placeholder="Search expenses, tasks, categories..."
             autoFocus
             style={{
               flex: 1,
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              fontSize: '0.9375rem',
-              fontWeight: 400,
+              fontSize: '0.875rem',
               color: 'var(--text-primary)',
               fontFamily: 'inherit',
             }}
           />
-          <button onClick={handleClose} className="btn-icon" aria-label="Close search">
-            <X size={15} />
-          </button>
+          {query && (
+            <button
+              onClick={() => setQuery('')}
+              className="btn-icon"
+              aria-label="Clear"
+              style={{ width: 22, height: 22, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}
+            >
+              <X size={14} />
+            </button>
+          )}
+          <kbd style={{
+            padding: '2px 6px',
+            borderRadius: 4,
+            background: 'var(--bg-canvas)',
+            border: '1px solid var(--border)',
+            fontSize: '0.6875rem',
+            color: 'var(--text-muted)',
+            fontFamily: 'inherit',
+          }}>
+            ESC
+          </kbd>
         </div>
 
-        {/* Results */}
-        <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+        {/* Results Body */}
+        <div style={{ maxHeight: 380, overflowY: 'auto', padding: '12px 16px' }}>
           {!query.trim() ? (
-            <div style={{
-              padding: '40px 20px',
-              textAlign: 'center',
-              fontSize: '0.8125rem',
-              color: 'var(--text-muted)',
-              fontStyle: 'italic',
-            }}>
-              Type to search across your expenses and tasks...
+            <div style={{ padding: '36px 12px', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+              Start typing to search expenses and tasks...
             </div>
           ) : !hasResults ? (
-            <div style={{
-              padding: '40px 20px',
-              textAlign: 'center',
-              fontSize: '0.8125rem',
-              color: 'var(--text-muted)',
-            }}>
-              No results found for <strong style={{ color: 'var(--text-secondary)' }}>"{query}"</strong>
+            <div style={{ padding: '36px 12px', textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+              No results found for <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>"{query}"</span>
             </div>
           ) : (
-            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Expenses */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Expenses list */}
               {filteredExpenses.length > 0 && (
                 <div>
-                  <div style={{
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-muted)',
-                    marginBottom: 6,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}>
-                    <CreditCard size={11} color="var(--accent)" />
+                  <div style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', marginBottom: 8 }}>
                     Expenses ({filteredExpenses.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {filteredExpenses.map(exp => (
-                      <div
-                        key={exp.id}
-                        onClick={() => {
-                          handleClose();
-                          setActivePage('expenses');
-                          setEditingExpense(exp);
-                        }}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          borderRadius: 'var(--radius-md)',
-                          background: 'var(--bg-tertiary)',
-                          border: '1px solid var(--border-subtle)',
-                          cursor: 'pointer',
-                          transition: 'all 0.12s',
-                        }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.borderColor = 'var(--accent-border)';
-                          e.currentTarget.style.background = 'var(--bg-active)';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                          e.currentTarget.style.background = 'var(--bg-tertiary)';
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                          <div style={{
-                            width: 32, height: 32, borderRadius: 'var(--radius-sm)',
-                            background: 'var(--accent-muted)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0,
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.8125rem', fontWeight: 700, color: 'var(--accent)',
-                          }}>₹</div>
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{
-                              fontSize: '0.875rem', fontWeight: 600,
-                              color: 'var(--text-primary)',
-                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                            }}>
-                              {exp.title}
-                            </div>
-                            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                              {exp.category} · <span style={{ fontFamily: 'var(--font-mono)' }}>{exp.date}</span>
+                    {filteredExpenses.map(exp => {
+                      const color = getCategoryColor(exp.category, theme);
+                      return (
+                        <div
+                          key={exp.id}
+                          onClick={() => {
+                            handleClose();
+                            setActivePage('expenses');
+                            setEditingExpense(exp);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '8px 10px',
+                            borderRadius: 'var(--radius-control)',
+                            border: '1px solid var(--border)',
+                            background: 'var(--bg-canvas)',
+                            cursor: 'pointer',
+                            transition: 'border-color 0.15s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--text-muted)'}
+                          onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {exp.title}
+                              </div>
+                              <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+                                {exp.category} · <span className="num">{exp.date}</span>
+                              </div>
                             </div>
                           </div>
+                          <span className="num" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', marginLeft: 12 }}>
+                            ₹{Number(exp.amount).toLocaleString('en-IN')}
+                          </span>
                         </div>
-                        <div style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '0.875rem', fontWeight: 700,
-                          color: 'var(--color-success)',
-                          flexShrink: 0, marginLeft: 12,
-                        }}>
-                          ₹{exp.amount.toLocaleString('en-IN')}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* Tasks */}
+              {/* Tasks list */}
               {filteredTodos.length > 0 && (
                 <div>
-                  <div style={{
-                    fontSize: '0.6875rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'var(--text-muted)',
-                    marginBottom: 6,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                  }}>
-                    <CheckSquare size={11} color="var(--accent-blue)" />
+                  <div style={{ fontSize: '0.6875rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-muted)', marginBottom: 8 }}>
                     Tasks ({filteredTodos.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -237,45 +203,44 @@ export const GlobalSearchModal = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          borderRadius: 'var(--radius-md)',
-                          background: 'var(--bg-tertiary)',
-                          border: '1px solid var(--border-subtle)',
+                          padding: '8px 10px',
+                          borderRadius: 'var(--radius-control)',
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg-canvas)',
                           cursor: 'pointer',
-                          transition: 'all 0.12s',
-                          gap: 10,
+                          transition: 'border-color 0.15s',
                         }}
-                        onMouseEnter={e => {
-                          e.currentTarget.style.borderColor = 'rgba(108,142,245,0.3)';
-                          e.currentTarget.style.background = 'rgba(108,142,245,0.05)';
-                        }}
-                        onMouseLeave={e => {
-                          e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                          e.currentTarget.style.background = 'var(--bg-tertiary)';
-                        }}
+                        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--text-muted)'}
+                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                           <input
                             type="checkbox"
                             checked={todo.completed}
-                            onChange={e => { e.stopPropagation(); toggleTodoCompleted(todo.id); }}
+                            onChange={e => {
+                              e.stopPropagation();
+                              toggleTodoCompleted(todo.id);
+                            }}
                             style={{ width: 14, height: 14, accentColor: 'var(--accent)', cursor: 'pointer', flexShrink: 0 }}
                           />
                           <div style={{ minWidth: 0 }}>
                             <div style={{
-                              fontSize: '0.875rem', fontWeight: 600,
+                              fontSize: '0.8125rem',
+                              fontWeight: 500,
                               color: todo.completed ? 'var(--text-muted)' : 'var(--text-primary)',
                               textDecoration: todo.completed ? 'line-through' : 'none',
-                              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
                             }}>
                               {todo.title}
                             </div>
-                            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                              {todo.priority} priority · Due <span style={{ fontFamily: 'var(--font-mono)' }}>{todo.dueDate}</span>
+                            <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>
+                              {todo.priority} priority · <span className="num">{todo.dueDate}</span>
                             </div>
                           </div>
                         </div>
-                        <ArrowRight size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+                        <ArrowRight size={13} color="var(--text-muted)" style={{ flexShrink: 0 }} />
                       </div>
                     ))}
                   </div>
@@ -290,28 +255,14 @@ export const GlobalSearchModal = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '10px 16px',
-          borderTop: '1px solid var(--border-base)',
-          background: 'var(--bg-tertiary)',
+          padding: '8px 16px',
+          borderTop: '1px solid var(--border)',
+          background: 'var(--bg-canvas)',
           fontSize: '0.6875rem',
           color: 'var(--text-muted)',
         }}>
-          <span>Results update as you type</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <kbd style={{
-              padding: '2px 5px',
-              borderRadius: 4,
-              background: 'var(--bg-secondary)',
-              border: '1px solid var(--border-base)',
-              fontSize: '0.6875rem',
-              fontWeight: 500,
-              color: 'var(--text-secondary)',
-              fontFamily: 'inherit',
-            }}>
-              ESC
-            </kbd>
-            <span>to close</span>
-          </div>
+          <span>Press ESC or click outside to dismiss</span>
+          <span>CampusFlow 2.0</span>
         </div>
       </div>
     </div>

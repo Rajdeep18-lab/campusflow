@@ -1,122 +1,69 @@
 import React, { useState, useRef } from 'react';
 import {
-  User,
-  Sun,
-  Moon,
   Download,
   Upload,
-  RotateCcw,
-  Check,
-  ShieldCheck,
-  Camera,
-  Trash2,
-  AlertTriangle,
-  Bell,
-  BellOff,
-  BellRing,
-  Mail,
+  X,
   LogOut,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { UserAvatar } from '../components/UserAvatar';
-
-/* Settings section wrapper */
-const SettingsSection = ({ title, subtitle, icon: Icon, children }) => (
-  <div className="card">
-    <div style={{
-      padding: '16px 20px',
-      borderBottom: '1px solid var(--border-base)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-    }}>
-      <div style={{
-        width: 36,
-        height: 36,
-        borderRadius: 'var(--radius-md)',
-        background: 'var(--accent-subtle)',
-        color: 'var(--accent)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <Icon size={17} strokeWidth={2} />
-      </div>
-      <div>
-        <div style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: '0.9375rem',
-          fontWeight: 700,
-          color: 'var(--text-primary)',
-          letterSpacing: '-0.02em',
-        }}>
-          {title}
-        </div>
-        {subtitle && (
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-            {subtitle}
-          </div>
-        )}
-      </div>
-    </div>
-    <div style={{ padding: '18px 20px' }}>
-      {children}
-    </div>
-  </div>
-);
 
 export const SettingsView = () => {
   const {
     profile,
     expenses,
-    todos,
     monthlyBudget,
     updateProfile,
     toggleTheme,
     exportDataAsJSON,
     importDataFromJSON,
     resetAllDataToDefaults,
+    saveMonthlyBudget,
     notifPermission,
     requestNotifications,
     showToast,
   } = useApp();
 
   const { currentUser, logout } = useAuth();
+  const fileInputRef = useRef(null);
 
   const [nameInput, setNameInput] = useState(profile?.name || '');
-  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
-  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [lastExportTime, setLastExportTime] = useState(null);
-  const fileInputRef = useRef(null);
-  const imageInputRef = useRef(null);
+  const [budgetInput, setBudgetInput] = useState(monthlyBudget > 0 ? String(monthlyBudget) : '');
+  const [hasUnsavedName, setHasUnsavedName] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      showToast?.('Signed out successfully. See you soon!', 'info');
-    } catch (err) {
-      alert(err.message || 'Failed to sign out');
-    }
+  const now = new Date();
+  const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthExpenses = expenses.filter(e => e.date && e.date.startsWith(monthPrefix));
+  const monthSpent = monthExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+
+  const displayName = profile?.name || currentUser?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'Rajdeep');
+  const initial = (displayName.charAt(0) || 'R').toUpperCase();
+  const emailVal = currentUser?.email || 'rajdeep@college.edu';
+  const isDark = profile?.theme === 'dark';
+
+  const handleNameChange = (e) => {
+    setNameInput(e.target.value);
+    setHasUnsavedName(e.target.value !== (profile?.name || ''));
   };
 
-  const handleNameSave = (e) => {
+  const handleSaveProfile = (e) => {
     e.preventDefault();
-    if (nameInput.trim()) updateProfile({ name: nameInput.trim() });
+    if (nameInput.trim()) {
+      updateProfile({ name: nameInput.trim() });
+      setHasUnsavedName(false);
+      showToast?.('Profile updated successfully', 'success');
+    }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert('File must be under 2MB.');
-      return;
+  const handleSaveBudget = (e) => {
+    e.preventDefault();
+    const val = parseFloat(budgetInput);
+    if (!isNaN(val) && val >= 0) {
+      saveMonthlyBudget(val);
+      showToast?.('Budget limit saved', 'success');
     }
-    const reader = new FileReader();
-    reader.onloadend = () => updateProfile({ avatarUrl: reader.result });
-    reader.readAsDataURL(file);
   };
 
   const handleJSONFileChange = (e) => {
@@ -124,541 +71,356 @@ export const SettingsView = () => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      if (typeof ev.target?.result === 'string') importDataFromJSON(ev.target.result);
+      if (typeof ev.target?.result === 'string') {
+        importDataFromJSON(ev.target.result);
+      }
     };
     reader.readAsText(file);
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file || !file.name.endsWith('.json')) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (typeof ev.target?.result === 'string') importDataFromJSON(ev.target.result);
-    };
-    reader.readAsText(file);
-  };
-
-  const handleExport = () => {
-    exportDataAsJSON();
-    setLastExportTime(new Date());
-  };
-
-  const approxSize = () => {
-    const data = { profile, expenses, todos, monthlyBudget };
-    const bytes = new Blob([JSON.stringify(data)]).size;
-    return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+  const handleConfirmClearAll = () => {
+    if (deleteConfirmationText.trim().toUpperCase() === 'DELETE') {
+      resetAllDataToDefaults();
+      setIsClearModalOpen(false);
+      setDeleteConfirmationText('');
+      showToast?.('All data has been reset', 'info');
+    }
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 740 }}>
-
-      {/* Page Header */}
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 720 }}>
+      {/* ── Page Header ── */}
       <div>
         <h1 style={{
-          fontFamily: 'var(--font-heading)',
-          fontSize: '1.375rem', fontWeight: 800,
-          letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2,
+          fontSize: '22px',
+          fontWeight: 600,
+          letterSpacing: '-0.02em',
+          color: 'var(--text)',
+          lineHeight: 1.25,
         }}>
           Settings
         </h1>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 4 }}>
-          Manage your personal profile, notification preferences, theme, and data backups.
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: 4 }}>
+          Manage your profile, appearance, budget and data.
         </p>
       </div>
 
-      {/* ── Profile ── */}
-      <SettingsSection title="Personal Profile" subtitle="Update your name, profile photo, and view account details" icon={User}>
-        <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', gap: 24 }}>
-          {/* Avatar */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{ position: 'relative' }}
-              onMouseEnter={(e) => {
-                const o = e.currentTarget.querySelector('.avatar-overlay');
-                if (o) o.style.opacity = 1;
-              }}
-              onMouseLeave={(e) => {
-                const o = e.currentTarget.querySelector('.avatar-overlay');
-                if (o) o.style.opacity = 0;
-              }}
-            >
-              <UserAvatar size="xl" />
-              <div
-                className="avatar-overlay"
-                onClick={() => imageInputRef.current?.click()}
-                style={{
-                  position: 'absolute', inset: 0, borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.55)', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                  opacity: 0, transition: 'opacity 0.2s', cursor: 'pointer',
-                }}
-              >
-                <Camera size={20} color="#fff" />
-              </div>
-            </div>
-            <input type="file" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" style={{ display: 'none' }} />
-            {profile?.avatarUrl && (
-              <button
-                onClick={() => updateProfile({ avatarUrl: null })}
-                style={{
-                  fontSize: '0.6875rem', color: 'var(--color-danger)',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4,
-                }}
-              >
-                <Trash2 size={11} /> Remove photo
-              </button>
-            )}
+      {/* ── Card 1: Profile ── */}
+      <div className="card">
+        <div style={{ marginBottom: 14 }}>
+          <div className="card-title">Profile</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+            Your name is used in the greeting.
           </div>
+        </div>
 
-          {/* Name form */}
-          <form onSubmit={handleNameSave} style={{ flex: 1, minWidth: 240, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div className="form-group">
-              <label className="form-label">Display Name</label>
-              <div style={{ display: 'flex', gap: 8 }}>
+        <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Avatar circle + Name input */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <div
+              className="sidebar-avatar-circle"
+              style={{ width: 38, height: 38, fontSize: '15px', marginTop: 20 }}
+            >
+              {initial}
+            </div>
+
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="form-group">
+                <label className="form-label">Name</label>
                 <input
                   type="text"
                   value={nameInput}
-                  onChange={(e) => setNameInput(e.target.value)}
-                  placeholder="Your name..."
+                  onChange={handleNameChange}
                   className="form-input"
-                  maxLength={40}
+                  placeholder="Your full name"
                   required
-                  style={{ flex: 1, fontSize: '0.875rem' }}
                 />
-                <button type="submit" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
-                  <Check size={14} /> Save
-                </button>
               </div>
-              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                Displayed in greetings across the application dashboard.
-              </span>
-            </div>
 
-            {/* Logged in Firebase Email */}
-            <div className="form-group">
-              <label className="form-label">Account Email (Firebase)</label>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '10px 14px',
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-base)',
-                flexWrap: 'wrap',
-                gap: 8,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                  <Mail size={16} color="var(--accent)" style={{ flexShrink: 0 }} />
-                  <span style={{
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {currentUser?.email || 'Authenticated User'}
-                  </span>
-                </div>
-                <span style={{
-                  fontSize: '0.6875rem',
-                  fontWeight: 700,
-                  color: 'var(--color-success)',
-                  background: 'var(--accent-subtle)',
-                  padding: '2px 8px',
-                  borderRadius: 20,
-                  border: '1px solid var(--border-base)',
-                  flexShrink: 0,
-                }}>
-                  Active
-                </span>
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <input
+                  type="email"
+                  value={emailVal}
+                  readOnly
+                  disabled
+                  className="form-input"
+                  style={{
+                    background: 'var(--surface-2)',
+                    color: 'var(--text-muted)',
+                    cursor: 'not-allowed',
+                  }}
+                />
               </div>
             </div>
-
-            {/* Current Session & Logout */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 14px',
-              borderRadius: 'var(--radius-md)',
-              background: 'var(--bg-tertiary)',
-              border: '1px solid var(--border-subtle)',
-              flexWrap: 'wrap',
-              gap: 10,
-            }}>
-              <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  Session Security
-                </div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                  UID: <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem' }}>{currentUser?.uid ? `${currentUser.uid.substring(0, 12)}...` : 'N/A'}</code>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsLogoutConfirmOpen(true)}
-                className="btn btn-secondary btn-sm"
-                style={{
-                  color: 'var(--color-danger)',
-                  borderColor: 'rgba(220, 38, 38, 0.3)',
-                  gap: 6,
-                  height: 32,
-                  padding: '0 12px',
-                }}
-              >
-                <LogOut size={13} strokeWidth={2.2} /> Sign Out
-              </button>
-            </div>
-          </form>
-        </div>
-      </SettingsSection>
-
-      {/* ── Notifications ── */}
-      <SettingsSection
-        title="Task Notifications"
-        subtitle="Get browser alerts for overdue & due-today tasks"
-        icon={notifPermission === 'granted' ? BellRing : Bell}
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-          {/* Status row */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
-            padding: '14px 16px', borderRadius: 'var(--radius-md)',
-            background: 'var(--bg-tertiary)',
-            border: '1px solid var(--border-base)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {notifPermission === 'granted'
-                ? <BellRing size={18} color="var(--accent)" strokeWidth={2} />
-                : notifPermission === 'denied'
-                ? <BellOff size={18} color="var(--color-danger)" strokeWidth={2} />
-                : <Bell size={18} color="var(--accent)" strokeWidth={2} />
-              }
-              <div>
-                <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  {notifPermission === 'granted' ? 'Notifications Enabled'
-                    : notifPermission === 'denied' ? 'Notifications Blocked'
-                    : notifPermission === 'unsupported' ? 'Not Supported'
-                    : 'Notifications Off'}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                  {notifPermission === 'granted'
-                    ? "You will receive task reminders automatically every 30 minutes"
-                    : notifPermission === 'denied'
-                    ? 'Go to browser Site Settings → Notifications → Allow CampusFlow'
-                    : notifPermission === 'unsupported'
-                    ? "Your browser doesn't support push notifications"
-                    : 'Click "Enable" to activate task deadline reminders'}
-                </div>
-              </div>
-            </div>
-
-            {/* Action button */}
-            {notifPermission !== 'unsupported' && notifPermission !== 'denied' && (
-              <button
-                onClick={requestNotifications}
-                disabled={notifPermission === 'granted'}
-                className={notifPermission === 'granted' ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm'}
-                style={{ flexShrink: 0 }}
-              >
-                {notifPermission === 'granted'
-                  ? <><Check size={13} strokeWidth={2.5} /> Enabled</>
-                  : <><Bell size={13} strokeWidth={2.5} /> Enable</>}
-              </button>
-            )}
-
-            {notifPermission === 'denied' && (
-              <span style={{
-                fontSize: '0.75rem', color: 'var(--color-danger)', fontWeight: 600,
-                display: 'flex', alignItems: 'center', gap: 5,
-              }}>
-                <BellOff size={13} /> Blocked in browser
-              </span>
-            )}
           </div>
 
-          {/* What you'll get */}
-          {notifPermission !== 'unsupported' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Notification Rules
-              </div>
-              {[
-                { emoji: '🔴', title: 'Overdue Alerts', desc: 'Fired when you have tasks past their due date' },
-                { emoji: '⏰', title: 'Due Today Reminders', desc: 'Each incomplete task due today receives a nudge' },
-                { emoji: '🔄', title: 'Periodic Check', desc: 'Runs every 30 minutes in the background' },
-                { emoji: '🛡️', title: 'Anti-Spam Filter', desc: "Same task will not re-notify within 6 hours" },
-              ].map(({ emoji, title, desc }) => (
-                <div key={title} style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 10,
-                  padding: '10px 14px', borderRadius: 'var(--radius-md)',
-                  background: 'var(--bg-tertiary)',
-                  border: '1px solid var(--border-subtle)',
-                }}>
-                  <span style={{ fontSize: '1.125rem', flexShrink: 0, lineHeight: 1.3 }}>{emoji}</span>
-                  <div>
-                    <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{title}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </SettingsSection>
-
-      {/* ── Appearance ── */}
-      <SettingsSection
-        title="Appearance"
-        subtitle="Toggle between light and dark warm neutral themes"
-        icon={profile?.theme === 'dark' ? Moon : Sun}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Color Theme</div>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              Currently using <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{profile?.theme || 'light'}</span> theme
-            </div>
-          </div>
-          <button onClick={toggleTheme} className="btn btn-secondary btn-sm">
-            {profile?.theme === 'dark'
-              ? <><Sun size={14} style={{ color: 'var(--accent)' }} /> Switch to Light</>
-              : <><Moon size={14} style={{ color: 'var(--accent)' }} /> Switch to Dark</>
-            }
-          </button>
-        </div>
-      </SettingsSection>
-
-      {/* ── Data Portability ── */}
-      <div className="card" style={{ overflow: 'hidden' }}>
-        <div style={{
-          padding: '16px 20px',
-          borderBottom: '1px solid var(--border-base)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-md)',
-            background: 'var(--accent-subtle)', color: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>
-            <Download size={17} strokeWidth={2} />
-          </div>
-          <div>
-            <div style={{ fontFamily: 'var(--font-heading)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-              Data Portability
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-              Export or import your complete CampusFlow backup
-            </div>
-          </div>
-        </div>
-
-        <div style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Stats row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {[
-              { label: 'Expenses', value: expenses.length },
-              { label: 'Tasks', value: todos.length },
-              { label: 'Est. Size', value: approxSize() },
-            ].map(({ label, value }) => (
-              <div key={label} style={{
-                background: 'var(--bg-tertiary)', border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)', padding: '12px 14px', textAlign: 'center',
-              }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>{value}</div>
-                <div style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>{label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Export card */}
-          <div style={{
-            background: 'var(--bg-tertiary)',
-            border: '1px solid var(--border-base)',
-            borderRadius: 'var(--radius-md)',
-            padding: '16px 18px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            gap: 16, flexWrap: 'wrap',
-          }}>
-            <div>
-              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Download size={15} color="var(--accent)" /> Export JSON Backup
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                Downloads all transactions, tasks, and budgets as a valid <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-surface)', padding: '1px 5px', borderRadius: 4, fontSize: '0.7rem' }}>.json</code> file.
-              </div>
-              {lastExportTime && (
-                <div style={{ fontSize: '0.6875rem', color: 'var(--color-success)', marginTop: 6, display: 'flex', alignItems: 'center', gap: 5, fontWeight: 600 }}>
-                  <Check size={12} /> Last exported at {lastExportTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              )}
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
             <button
-              onClick={handleExport}
+              type="submit"
               className="btn btn-primary"
-              style={{ flexShrink: 0 }}
+              disabled={!hasUnsavedName}
             >
-              <Download size={15} strokeWidth={2.5} /> Download Backup
+              Save changes
             </button>
-          </div>
-
-          {/* Import card */}
-          <div
-            onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-            onDragLeave={() => setIsDragOver(false)}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              background: isDragOver ? 'var(--accent-subtle)' : 'var(--bg-tertiary)',
-              border: `2px dashed ${isDragOver ? 'var(--accent)' : 'var(--border-base)'}`,
-              borderRadius: 'var(--radius-md)', padding: '22px 18px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              gap: 8, cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center',
-            }}
-          >
-            <div style={{
-              width: 44, height: 44, borderRadius: '50%',
-              background: 'var(--accent-subtle)', color: 'var(--accent)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 4, transform: isDragOver ? 'scale(1.15)' : 'scale(1)', transition: 'transform 0.2s',
-            }}>
-              <Upload size={20} strokeWidth={2} />
-            </div>
-            <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-              {isDragOver ? 'Drop your backup file here!' : 'Drag & drop to import'}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              or <span style={{ color: 'var(--accent)', fontWeight: 600 }}>click to browse</span> for a backup <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--bg-surface)', padding: '1px 5px', borderRadius: 4, fontSize: '0.7rem' }}>.json</code> file
-            </div>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 2 }}>
-              ⚠️ This will update your current data with the backup contents
-            </div>
-          </div>
-          <input type="file" ref={fileInputRef} onChange={handleJSONFileChange} accept=".json,application/json" style={{ display: 'none' }} />
-
-          {/* Info strip */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '10px 14px', background: 'var(--bg-tertiary)',
-            borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)',
-          }}>
-            <ShieldCheck size={14} color="var(--accent)" />
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
-              All records are stored <strong style={{ color: 'var(--text-primary)' }}>locally in your browser</strong> under your user session.
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              {hasUnsavedName ? 'You have unsaved changes' : 'No unsaved changes'}
             </span>
           </div>
+        </form>
+      </div>
+
+      {/* ── Card 2: Appearance ── */}
+      <div className="card">
+        <div style={{ marginBottom: 14 }}>
+          <div className="card-title">Appearance</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+            Applies instantly on this device.
+          </div>
+        </div>
+
+        <div className="segmented-control" style={{ width: 140 }}>
+          <button
+            onClick={() => { if (isDark) toggleTheme(); }}
+            className={`segment-btn${!isDark ? ' active' : ''}`}
+            style={{ flex: 1, justifyContent: 'center' }}
+          >
+            Light
+          </button>
+          <button
+            onClick={() => { if (!isDark) toggleTheme(); }}
+            className={`segment-btn${isDark ? ' active' : ''}`}
+            style={{ flex: 1, justifyContent: 'center' }}
+          >
+            Dark
+          </button>
         </div>
       </div>
 
-      {/* ── Danger Zone ── */}
-      <div className="card" style={{ border: '1px solid rgba(220,38,38,0.25)' }}>
-        <div style={{
-          padding: '16px 20px', borderBottom: '1px solid rgba(220,38,38,0.15)',
-          display: 'flex', alignItems: 'center', gap: 10,
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 'var(--radius-md)',
-            background: 'rgba(220,38,38,0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <RotateCcw size={16} color="var(--color-danger)" />
-          </div>
-          <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--color-danger)', letterSpacing: '-0.02em' }}>
-            Danger Zone
+      {/* ── Card 3: Monthly budget ── */}
+      <div className="card">
+        <div style={{ marginBottom: 14 }}>
+          <div className="card-title">Monthly budget</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+            Used for budget remaining and analytics.
           </div>
         </div>
-        <div style={{ padding: '18px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 3 }}>Reset All Data</div>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                Permanently clears all expenses, tasks, and budget settings from your local browser storage.
-              </div>
+
+        <form onSubmit={handleSaveBudget} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="form-group" style={{ maxWidth: 260 }}>
+            <label className="form-label">Amount</label>
+            <div style={{ position: 'relative' }}>
+              <span style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '13px',
+                color: 'var(--text-muted)',
+              }}>
+                ₹
+              </span>
+              <input
+                type="number"
+                value={budgetInput}
+                onChange={(e) => setBudgetInput(e.target.value)}
+                placeholder="0"
+                className="form-input"
+                style={{ paddingLeft: 26 }}
+              />
             </div>
-            <button onClick={() => setIsResetConfirmOpen(true)} className="btn btn-danger btn-sm" style={{ flexShrink: 0 }}>
-              <RotateCcw size={13} /> Reset All Data
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 4 }}>
+              ₹{monthSpent.toLocaleString('en-IN')} used this month
+            </span>
+          </div>
+
+          <div>
+            <button type="submit" className="btn btn-primary">
+              Save budget
             </button>
           </div>
+        </form>
+      </div>
+
+      {/* ── Card 4: Notifications ── */}
+      <div className="card">
+        <div style={{ marginBottom: 14 }}>
+          <div className="card-title">Notifications</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+            Reminders for deadlines on this device.
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>
+              Deadline reminders
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+              Notify me the day before a task is due
+            </div>
+          </div>
+
+          {/* Toggle Switch */}
+          <label style={{ position: 'relative', display: 'inline-block', width: 38, height: 22, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={notifPermission === 'granted'}
+              onChange={requestNotifications}
+              style={{ opacity: 0, width: 0, height: 0 }}
+            />
+            <span style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: notifPermission === 'granted' ? 'var(--accent-solid)' : 'var(--surface-2)',
+              border: '1px solid var(--border)',
+              borderRadius: 22,
+              transition: 'all 0.2s ease',
+            }}>
+              <span style={{
+                position: 'absolute',
+                left: notifPermission === 'granted' ? 18 : 2,
+                top: 2,
+                width: 16,
+                height: 16,
+                backgroundColor: '#FFFFFF',
+                borderRadius: '50%',
+                transition: 'left 0.2s ease',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              }} />
+            </span>
+          </label>
         </div>
       </div>
 
-      {/* ── About Footer ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '16px 0', borderTop: '1px solid var(--border-base)',
-        fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 500,
-      }}>
-        <ShieldCheck size={14} color="var(--accent)" />
-        <span>CampusFlow 2.0 · Firebase Auth · PWA · Local Storage First</span>
+      {/* ── Card 5: Backup and restore ── */}
+      <div className="card">
+        <div style={{ marginBottom: 14 }}>
+          <div className="card-title">Backup and restore</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+            Export everything as a JSON file, or restore from one.
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button onClick={exportDataAsJSON} className="btn btn-secondary">
+            <Download size={14} strokeWidth={1.75} />
+            <span>Export data</span>
+          </button>
+          <button onClick={() => fileInputRef.current?.click()} className="btn btn-secondary">
+            <Upload size={14} strokeWidth={1.75} />
+            <span>Import data</span>
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleJSONFileChange}
+            accept=".json,application/json"
+            style={{ display: 'none' }}
+          />
+        </div>
+
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 10 }}>
+          Importing replaces your current data. Export a backup first.
+        </div>
       </div>
 
-      {/* ── Logout Confirm Modal ── */}
-      {isLogoutConfirmOpen && (
-        <div className="modal-overlay" onClick={() => setIsLogoutConfirmOpen(false)}>
-          <div className="modal-card max-w-md" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <LogOut size={20} color="var(--accent)" />
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                  Sign out of CampusFlow?
-                </h3>
-              </div>
+      {/* ── Card 6: Danger Zone / Clear all data ── */}
+      <div className="card" style={{ border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
+              Clear all data
             </div>
-            <div className="modal-body">
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
-                You are currently signed in as <strong style={{ color: 'var(--text-primary)' }}>{currentUser?.email}</strong>.
-                Your data is securely saved. You can sign back in anytime to continue where you left off.
-              </p>
-            </div>
-            <div className="modal-footer">
-              <button onClick={() => setIsLogoutConfirmOpen(false)} className="btn btn-secondary btn-sm">
-                Stay Signed In
-              </button>
-              <button
-                onClick={() => { setIsLogoutConfirmOpen(false); handleLogout(); }}
-                className="btn btn-primary btn-sm"
-              >
-                Yes, Sign Out
-              </button>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: 2 }}>
+              Permanently delete all expenses, tasks, your budget and profile from this device.
             </div>
           </div>
+
+          <button
+            onClick={() => setIsClearModalOpen(true)}
+            className="btn btn-danger"
+          >
+            Clear all data...
+          </button>
+        </div>
+      </div>
+
+      {/* Sign Out Row */}
+      {currentUser && (
+        <div style={{ display: 'flex', justifyContent: 'flex-start', paddingTop: 8 }}>
+          <button
+            onClick={logout}
+            className="btn btn-secondary"
+            style={{ color: 'var(--danger)' }}
+          >
+            <LogOut size={14} strokeWidth={1.75} />
+            <span>Sign out of CampusFlow</span>
+          </button>
         </div>
       )}
 
-      {/* ── Reset Confirm Modal ── */}
-      {isResetConfirmOpen && (
-        <div className="modal-overlay" onClick={() => setIsResetConfirmOpen(false)}>
-          <div className="modal-card max-w-md" onClick={(e) => e.stopPropagation()}>
+      {/* ── Clear All Data Confirmation Modal (Screen 10 in PDF) ── */}
+      {isClearModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsClearModalOpen(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <AlertTriangle size={20} color="var(--color-danger)" />
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-danger)', letterSpacing: '-0.02em' }}>
-                  Are you absolutely sure?
-                </h3>
+              <span className="modal-title">Clear all data?</span>
+              <button
+                onClick={() => setIsClearModalOpen(false)}
+                className="btn-icon"
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.5 }}>
+                This permanently deletes all expenses, tasks, your budget and profile from this device. This cannot be undone.
+              </p>
+
+              {/* Tip Callout */}
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-control)',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                fontSize: '12px',
+                color: 'var(--text-muted)',
+              }}>
+                Tip: export a backup first from Settings.
+              </div>
+
+              {/* DELETE confirmation prompt */}
+              <div className="form-group">
+                <label className="form-label">Type DELETE to confirm</label>
+                <input
+                  type="text"
+                  value={deleteConfirmationText}
+                  onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                  placeholder="DELETE"
+                  className="form-input form-input-modal"
+                  autoFocus
+                />
               </div>
             </div>
-            <div className="modal-body">
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.65 }}>
-                This will permanently erase all your expenses, tasks, budget limits, and profile data from local storage.
-                <strong style={{ color: 'var(--text-primary)' }}> This action cannot be undone.</strong>
-              </p>
-            </div>
+
             <div className="modal-footer">
-              <button onClick={() => setIsResetConfirmOpen(false)} className="btn btn-secondary btn-sm">Cancel</button>
               <button
-                onClick={() => { resetAllDataToDefaults(); setIsResetConfirmOpen(false); }}
-                className="btn btn-danger btn-sm"
+                type="button"
+                onClick={() => { setIsClearModalOpen(false); setDeleteConfirmationText(''); }}
+                className="btn btn-secondary btn-modal"
               >
-                Yes, Reset Everything
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmClearAll}
+                disabled={deleteConfirmationText.trim().toUpperCase() !== 'DELETE'}
+                className="btn btn-danger-solid btn-modal"
+              >
+                Clear all data
               </button>
             </div>
           </div>
